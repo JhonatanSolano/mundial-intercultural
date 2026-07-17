@@ -23,6 +23,7 @@ const state = {
 
 let audioEngine = null;
 let countryAudioToken = 0;
+let resumeGeneralMusicOnReturn = false;
 
 function $(selector){ return document.querySelector(selector); }
 function $all(selector){ return [...document.querySelectorAll(selector)]; }
@@ -90,6 +91,18 @@ function freshSeed(name){
   return (hashText(name) ^ Date.now() ^ Math.floor(Math.random() * 900000)) >>> 0;
 }
 
+function usageBalancedCountries(kind, excludedIds = new Set(), salt = 0){
+  const usage = new Map(COUNTRIES.map(country => [country.id, 0]));
+  state.tournament.teams.forEach(team => {
+    const ids = kind === "draw" ? [team.countryId] : (team[`${kind}CountryIds`] || []);
+    ids.filter(Boolean).forEach(id => usage.set(id, (usage.get(id) || 0) + 1));
+  });
+  return shuffledWithEntropy(COUNTRIES.filter(country => !excludedIds.has(country.id)), salt).sort((a, b) => {
+    const byUsage = (usage.get(a.id) || 0) - (usage.get(b.id) || 0);
+    return byUsage || 0;
+  });
+}
+
 function newScores(){
   return { draw: 0, memory: 0, guess: 0, scenario: 0, sound: 0, commitment: 0 };
 }
@@ -107,6 +120,8 @@ function loadTournament(){
     team.activityLocked = { ...newLocks(), ...(team.activityLocked || {}) };
     team.stamps = team.stamps || [];
     team.commitments = team.commitments || [];
+    team.guessCountryIds = team.guessCountryIds || [];
+    team.soundCountryIds = team.soundCountryIds || team.soundTrackIds || [];
     team.score = totalScore(team);
   });
 }
@@ -208,6 +223,8 @@ function saveTeam(){
       activityScores: newScores(),
       activityLocked: newLocks(),
       commitments: [],
+      guessCountryIds: [],
+      soundCountryIds: [],
       finished: false,
       createdAt: new Date().toISOString()
     };
@@ -318,7 +335,7 @@ function drawCountry(){
     return;
   }
   const used = assignedCountryIds(team.key);
-  const available = shuffled(COUNTRIES, 15).filter(country => !used.has(country.id));
+  const available = usageBalancedCountries("draw", used, 15);
   if(!available.length){
     showTeamMessage("Ya no quedan paises disponibles. Finalicen o reinicien el juego.", true);
     return;
@@ -457,15 +474,20 @@ function finishMemory(completed){
 
 function buildGuessRound(){
   if(!ensureTeam() || isLocked("guess")) return;
+  const team = activeTeam();
   const teamCountry = selectedCountry();
-  const candidates = shuffled(COUNTRIES, 41).filter(country => country.id !== teamCountry.id);
+  const personalUsed = new Set([teamCountry.id, ...(team.guessCountryIds || [])]);
+  const candidates = usageBalancedCountries("guess", personalUsed, 41);
+  const pool = candidates.length >= 1 ? candidates : usageBalancedCountries("guess", new Set([teamCountry.id]), 42);
   state.guess = {
-    country: shuffled([teamCountry, ...candidates.slice(0, 9)], Date.now() % 100000)[0],
+    country: pool[0],
     active: true,
     done: false,
     revealed: 0,
     wrongAttempts: 0
   };
+  team.guessCountryIds = [...new Set([...(team.guessCountryIds || []), state.guess.country.id])];
+  saveTournament();
   $("#guessInput").value = "";
   $("#guessFeedback").textContent = "";
   $("#guessStatus").textContent = "Ronda activa: cada pista desde la tercera baja el puntaje. Cada intento incorrecto tambien descuenta.";
@@ -626,7 +648,7 @@ function finishScenario(){
 
 function startSoundGame(){
   if(!ensureTeam() || isLocked("sound")) return;
-  buildSoundChallenge();
+  buildSoundChallenge(true);
   state.sound.active = true;
   state.sound.resumeGeneralAfter = false;
   activateSoundCard(0);
@@ -634,15 +656,16 @@ function startSoundGame(){
   startTimer("sound", 25, $("#soundTimer"), finishSoundGame);
 }
 
-function buildSoundChallenge(){
+function buildSoundChallenge(persistTracks = false){
   const container = $("#soundChallenge");
   container.innerHTML = "";
   state.sound = { active: false, done: false, opened: new Set(), correct: new Set(), currentIndex: 0, resumeGeneralAfter: state.sound.resumeGeneralAfter || false, tracks: [] };
   const tracks = selectSoundTracks();
   state.sound.tracks = tracks.map(country => country.id);
   const team = activeTeam();
-  if(team){
+  if(team && persistTracks){
     team.soundTrackIds = [...state.sound.tracks];
+    team.soundCountryIds = [...state.sound.tracks];
     saveTournament();
   }
   tracks.forEach((country, index) => {
@@ -671,15 +694,16 @@ function buildSoundChallenge(){
 }
 
 function selectSoundTracks(){
-  const usage = new Map(COUNTRIES.map(country => [country.id, 0]));
-  state.tournament.teams.forEach(team => {
-    (team.soundTrackIds || []).forEach(id => usage.set(id, (usage.get(id) || 0) + 1));
-  });
-  const ordered = shuffledWithEntropy(COUNTRIES, 81).sort((a, b) => {
-    const byUsage = (usage.get(a.id) || 0) - (usage.get(b.id) || 0);
-    return byUsage || 0;
-  });
-  return ordered.slice(0, 3);
+  const team = activeTeam();
+  const teamUsed = new Set([
+    team && team.countryId,
+    ...((team && team.guessCountryIds) || []),
+    ...((team && (team.soundCountryIds || team.soundTrackIds)) || [])
+  ].filter(Boolean));
+  const fresh = usageBalancedCountries("sound", teamUsed, 81);
+  if(fresh.length >= 3) return fresh.slice(0, 3);
+  const withoutDraw = usageBalancedCountries("sound", new Set([team && team.countryId].filter(Boolean)), 82);
+  return withoutDraw.slice(0, 3);
 }
 
 async function playMusicTrack(country, index, triggerBtn){
@@ -1061,6 +1085,33 @@ function pauseGeneralMusic(){
   if(audio) audio.pause();
 }
 
+function pauseGeneralMusicForPageExit(){
+  if(isGeneralMusicPlaying()){
+    resumeGeneralMusicOnReturn = true;
+    pauseGeneralMusic();
+  }
+}
+
+function resumeGeneralMusicAfterPageReturn(){
+  if(!resumeGeneralMusicOnReturn) return;
+  resumeGeneralMusicOnReturn = false;
+  playGeneralMusic();
+}
+
+function handleVisibilityChange(){
+  if(document.hidden){
+    pauseGeneralMusicForPageExit();
+  } else {
+    resumeGeneralMusicAfterPageReturn();
+  }
+}
+
+function wirePageAudioLifecycle(){
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("pagehide", pauseGeneralMusicForPageExit);
+  window.addEventListener("pageshow", resumeGeneralMusicAfterPageReturn);
+}
+
 function finishGame(){
   const team = activeTeam();
   if(team) team.finished = true;
@@ -1164,6 +1215,7 @@ function init(){
   loadTournament();
   buildNav();
   wireEvents();
+  wirePageAudioLifecycle();
   buildAllGames();
   refreshHeader();
   goToStation(0);

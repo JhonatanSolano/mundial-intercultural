@@ -21,6 +21,7 @@ App web estatica para una jornada de interculturalidad con estetica mundialista.
 - Los equipos se guardan en el navegador con `localStorage` del mismo PC.
 - No se puede repetir el nombre de equipo. Si alguien intenta guardar un nombre ya usado, aparece un mensaje y debe cambiarlo.
 - Cada equipo recibe una semilla aleatoria guardada localmente: fichas, ordenes, pistas y tiempos cambian por grupo y no quedan faciles de copiar.
+- En las actividades con paises, excepto memoria, la seleccion prioriza paises menos usados para que participen todos y no se repitan tanto durante la jornada.
 - Los paises no se repiten entre equipos mientras el juego siga guardado.
 - Todos los juegos trabajan 10 paises: Argentina, Brasil, Colombia, Ecuador, Haiti, Mexico, Panama, Paraguay, Peru y Uruguay.
 - El puntaje maximo total es 100:
@@ -37,6 +38,7 @@ App web estatica para una jornada de interculturalidad con estetica mundialista.
 - La musica no requiere archivos externos. Se genera con Web Audio API dentro del navegador:
   - Fuera de los juegos: ambiente general. Si agregas `assets/music/electronica.mp3`, el boton de musica general reproducira ese archivo en bucle.
   - Dentro de juegos: patrones inspirados en el pais activo o en el pais seleccionado.
+- Si se sale de la app o se cambia de pestaña, la musica general se pausa y vuelve sola al regresar solo si estaba sonando antes.
 - Tambien puedes poner audios descargados en `assets/music/` con estos nombres exactos: `argentina.mp3`, `brasil.mp3`, `colombia.mp3`, `ecuador.mp3`, `haiti.mp3`, `mexico.mp3`, `panama.mp3`, `paraguay.mp3`, `peru.mp3`, `uruguay.mp3`.
 - El boton **Se acabo el juego** muestra la tabla final por pais, equipo y puntaje de mayor a menor, con musica de triunfo.
 - El boton **Reiniciar juego** borra todo lo guardado localmente y deja el torneo desde cero.
