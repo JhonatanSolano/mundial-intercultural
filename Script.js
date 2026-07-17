@@ -1085,31 +1085,46 @@ function pauseGeneralMusic(){
   if(audio) audio.pause();
 }
 
-function pauseGeneralMusicForPageExit(){
-  if(isGeneralMusicPlaying()){
+function shouldResumeGeneralMusic(){
+  const toggle = $("#soundToggle");
+  const generalWasEnabled = isGeneralMusicPlaying() || Boolean(toggle && toggle.getAttribute("aria-pressed") === "true");
+  return generalWasEnabled && !state.sound.active;
+}
+
+function pauseAudioForPageExit(){
+  if(shouldResumeGeneralMusic()){
     resumeGeneralMusicOnReturn = true;
-    pauseGeneralMusic();
+  }
+  pauseGeneralMusic();
+  stopCurrentCountryAudio();
+  if(audioEngine && audioEngine.enabled){
+    audioEngine.stop();
   }
 }
 
-function resumeGeneralMusicAfterPageReturn(){
+function resumeAudioAfterPageReturn(){
   if(!resumeGeneralMusicOnReturn) return;
+  if(document.hidden) return;
   resumeGeneralMusicOnReturn = false;
   playGeneralMusic();
 }
 
 function handleVisibilityChange(){
   if(document.hidden){
-    pauseGeneralMusicForPageExit();
+    pauseAudioForPageExit();
   } else {
-    resumeGeneralMusicAfterPageReturn();
+    resumeAudioAfterPageReturn();
   }
 }
 
 function wirePageAudioLifecycle(){
   document.addEventListener("visibilitychange", handleVisibilityChange);
-  window.addEventListener("pagehide", pauseGeneralMusicForPageExit);
-  window.addEventListener("pageshow", resumeGeneralMusicAfterPageReturn);
+  document.addEventListener("freeze", pauseAudioForPageExit);
+  document.addEventListener("resume", resumeAudioAfterPageReturn);
+  window.addEventListener("pagehide", pauseAudioForPageExit);
+  window.addEventListener("pageshow", resumeAudioAfterPageReturn);
+  window.addEventListener("blur", pauseAudioForPageExit);
+  window.addEventListener("focus", resumeAudioAfterPageReturn);
 }
 
 function finishGame(){
