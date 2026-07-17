@@ -192,6 +192,7 @@ function saveTeam(){
     state.tournament.teams.push(team);
     state.activeTeamKey = key;
     stopAllTimers();
+    clearTransientUi();
     resetRoundState();
     buildAllGames();
   }
@@ -316,6 +317,31 @@ function updateCountryResult(){
   }
   const country = selectedCountry();
   result.innerHTML = `<img class="country-result__flag-img" src="${country.flagImage}" alt="Bandera para dibujar">`;
+}
+
+function clearTransientUi(){
+  ["draw", "memory", "guess", "scenario", "sound", "commitment"].forEach(key => {
+    const timer = $(`#${key}Timer`);
+    if(timer) timer.textContent = "00";
+  });
+  $("#drawStatus").textContent = "Primero sorteen el pais; despues activen el cronometro para sellar automaticamente.";
+  $("#memoryStatus").textContent = "Pulsa iniciar ronda. Sin cronometro las fichas de pais-capital estan bloqueadas.";
+  $("#guessStatus").textContent = "Pulsa nueva ronda para iniciar el cronometro.";
+  $("#scenarioStatus").textContent = "Elijan una tarjeta y respondan rapido.";
+  $("#soundStatus").textContent = "Primero activen cronometro. Las canciones se habilitan una por una.";
+  $("#commitmentStatus").textContent = "Minimo 5 frases para puntuar el cierre.";
+  $("#guessInput").value = "";
+  $("#guessInput").disabled = false;
+  $("#checkGuessBtn").disabled = false;
+  $("#guessFeedback").textContent = "";
+  $("#commitmentInput").value = "";
+  $("#countryAudioHint").textContent = "Archivos esperados: argentina.mp3, brasil.mp3, colombia.mp3, ecuador.mp3, haiti.mp3, mexico.mp3, panama.mp3, paraguay.mp3, peru.mp3 y uruguay.mp3.";
+  const countryAudio = $("#countryAudio");
+  if(countryAudio){
+    countryAudio.pause();
+    countryAudio.removeAttribute("src");
+    countryAudio.load();
+  }
 }
 
 function stampStation(id){
@@ -1024,6 +1050,7 @@ function resetRoundState(){
 }
 
 function buildAllGames(){
+  updateCountryResult();
   buildMemory();
   buildGuessRoundPreview();
   buildScenarios();
