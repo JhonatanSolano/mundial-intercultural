@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copa de la Interculturalidad · UNAL</title>
+  <meta name="description" content="Jornada interactiva de interculturalidad con dinamicas mundialistas, fichas ocultas, memoria, musica y retos por equipos.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <button id="soundToggle" class="sound-toggle" type="button" aria-pressed="false">
+    <span class="sound-toggle__icon">♪</span>
+    <span id="soundLabel">Activar musica</span>
+  </button>
+  <audio id="generalMusic" src="assets/music/electronica.mp3" preload="none" loop></audio>
+
+  <header class="hero">
+    <div class="hero__copy">
+      <span class="badge">UNAL · Interculturalidad · Dinamica mundialista</span>
+      <h1>Copa de la Interculturalidad</h1>
+        <p>Una experiencia de juego rapido para levantarse, hablar, reir, negociar pistas y reconocer culturas. El mundial es la estetica; el centro es el dialogo intercultural.</p>
+    </div>
+
+    <section class="team-panel" aria-label="Registro del equipo">
+      <div>
+        <label for="teamName">Nombre del equipo</label>
+        <div class="team-panel__row">
+          <input id="teamName" type="text" maxlength="30" placeholder="Ej: Diversidad FC">
+          <button id="saveTeamBtn" class="icon-btn icon-btn--primary" type="button" title="Guardar equipo">Guardar</button>
+        </div>
+        <p id="teamSeedText" class="team-note">Cada nombre queda guardado en este PC y no se puede repetir.</p>
+      </div>
+      <div class="score-board">
+        <div>
+          <strong id="scoreValue">0</strong>
+          <span>Puntos</span>
+        </div>
+        <div>
+          <strong id="stampValue">0/6</strong>
+          <span>Sellos</span>
+        </div>
+      </div>
+      <button id="finishGameBtn" class="finish-btn" type="button">Se acabo el juego</button>
+    </section>
+  </header>
+
+  <nav id="stationNav" class="station-nav" aria-label="Estaciones"></nav>
+
+  <main id="app">
+    <section class="station" id="station-0">
+      <div class="station__intro">
+        <span class="eyebrow">Estacion 1 · 20 segundos</span>
+        <h2>Dibuja la bandera</h2>
+        <p>Sortearan un pais y tendran 20 segundos para dibujar su bandera en equipo. Miren la imagen, memoricen los colores y pasen al tablero o papel antes de que termine el cronometro.</p>
+      </div>
+      <div class="play-surface play-surface--center">
+        <div class="game-toolbar">
+          <div class="timer" id="drawTimer">00</div>
+          <button id="startDrawBtn" class="action-btn action-btn--small" type="button">Activar cronometro</button>
+          <span id="drawStatus" class="game-status">Primero sorteen el pais; despues activen el cronometro para sellar automaticamente.</span>
+        </div>
+        <button id="drawCountryBtn" class="action-btn" type="button">Sortear pais del equipo</button>
+        <div id="countryDrawResult" class="country-result" aria-live="polite">
+          <span class="country-result__placeholder">◌</span>
+          <strong>Esperando sorteo</strong>
+          <p>Guarda primero el nombre del equipo para que el sorteo sea unico.</p>
+        </div>
+      </div>
+      <button class="stamp-btn" data-station="0" type="button" disabled>Sello automatico</button>
+    </section>
+
+    <section class="station" id="station-1">
+      <div class="station__intro">
+        <span class="eyebrow">Estacion 2 · fichas ocultas</span>
+        <h2>Memoria cultural</h2>
+        <p>Volteen fichas para encontrar parejas entre paises y capitales. La ficha de capital solo muestra la capital; el equipo debe moverse, discutir y armar la pareja correcta.</p>
+      </div>
+      <div class="game-toolbar">
+        <div class="timer" id="memoryTimer">00</div>
+        <button id="startMemoryBtn" class="action-btn action-btn--small" type="button">Iniciar ronda</button>
+        <span id="memoryStatus" class="game-status">Las fichas cambian con el nombre del equipo.</span>
+      </div>
+      <div id="memoryBoard" class="memory-board"></div>
+      <button class="stamp-btn" data-station="1" type="button" disabled>Sello automatico</button>
+    </section>
+
+    <section class="station" id="station-2">
+      <div class="station__intro">
+        <span class="eyebrow">Estacion 3 · 45 segundos</span>
+        <h2>Adivina el pais</h2>
+        <p>Un integrante destapa pistas, otro corre a consultar al equipo y otro escribe. Desde la tercera pista el puntaje baja; si no adivinan, la ronda vale cero.</p>
+      </div>
+      <div class="game-toolbar">
+        <div class="timer timer--danger" id="guessTimer">00</div>
+        <button id="startGuessBtn" class="action-btn action-btn--small" type="button">Nueva ronda</button>
+        <span id="guessStatus" class="game-status">Ronda lista.</span>
+      </div>
+      <div id="guessClues" class="clue-grid"></div>
+      <div class="answer-row">
+        <input id="guessInput" type="text" placeholder="Escribe el pais...">
+        <button id="checkGuessBtn" class="icon-btn icon-btn--primary" type="button">Comprobar</button>
+      </div>
+      <p id="guessFeedback" class="feedback" aria-live="polite"></p>
+      <button class="stamp-btn" data-station="2" type="button" disabled>Sello automatico</button>
+    </section>
+
+    <section class="station" id="station-3">
+      <div class="station__intro">
+        <span class="eyebrow">Estacion 4 · 1 minuto y medio</span>
+        <h2>Tarjetas de convivencia</h2>
+        <p>Abran fichas ocultas, lean la situacion en voz alta y seleccionen la respuesta correcta. Las fichas no abiertas o no respondidas no suman puntos.</p>
+      </div>
+      <div class="game-toolbar">
+        <div class="timer" id="scenarioTimer">00</div>
+        <button id="startScenarioBtn" class="action-btn action-btn--small" type="button">Activar cronometro</button>
+        <span id="scenarioStatus" class="game-status">Elijan una tarjeta y respondan rapido.</span>
+      </div>
+      <div id="scenarioDeck" class="scenario-deck"></div>
+      <button class="stamp-btn" data-station="3" type="button" disabled>Sello automatico</button>
+    </section>
+
+    <section class="station" id="station-4">
+      <div class="station__intro">
+        <span class="eyebrow">Estacion 5 · musica por pais</span>
+        <h2>Tribuna sonora</h2>
+        <p>De pie, reproduzcan tres canciones al azar una por una y adivinen el pais con opciones. Al responder una cancion se desbloquea la siguiente.</p>
+      </div>
+      <div class="game-toolbar">
+        <div class="timer" id="soundTimer">00</div>
+        <button id="startSoundGameBtn" class="action-btn action-btn--small" type="button">Activar cronometro</button>
+          <span id="soundStatus" class="game-status">Primero activen cronometro. Las canciones se habilitan una por una.</span>
+      </div>
+      <div class="play-surface">
+        <div class="music-card">
+          <span id="musicCountryFlag" class="music-card__flag">♪</span>
+          <div>
+            <h3 id="musicCountryName">Adivina el pais por la musica</h3>
+            <p id="musicCountryText">Paises trabajados: Argentina, Brasil, Colombia, Ecuador, Haiti, Mexico, Panama, Paraguay, Peru y Uruguay.</p>
+          </div>
+        </div>
+        <div class="country-audio">
+          <p id="countryAudioHint">Archivos esperados: argentina.mp3, brasil.mp3, colombia.mp3, ecuador.mp3, haiti.mp3, mexico.mp3, panama.mp3, paraguay.mp3, peru.mp3 y uruguay.mp3.</p>
+          <audio id="countryAudio" preload="none"></audio>
+        </div>
+        <div id="soundChallenge" class="sound-grid"></div>
+      </div>
+      <button class="stamp-btn" data-station="4" type="button" disabled>Sello automatico</button>
+    </section>
+
+    <section class="station" id="station-5">
+      <div class="station__intro">
+        <span class="eyebrow">Cierre · 10 min</span>
+        <h2>Marcador intercultural</h2>
+        <p>Cierren con minimo 5 frases. Cada integrante debe aportar una frase y ubicarla en el balon colectivo antes de sellar.</p>
+      </div>
+      <div class="game-toolbar">
+        <div class="timer" id="commitmentTimer">00</div>
+        <button id="startCommitmentBtn" class="action-btn action-btn--small" type="button">Activar cronometro</button>
+        <span id="commitmentStatus" class="game-status">Minimo 5 frases para puntuar el cierre.</span>
+      </div>
+      <div class="commitment-panel">
+        <div class="answer-row">
+          <input id="commitmentInput" type="text" maxlength="90" placeholder="Ej: Preguntar antes de juzgar una costumbre">
+          <button id="addCommitmentBtn" class="icon-btn icon-btn--primary" type="button">Agregar</button>
+        </div>
+        <div id="commitmentList" class="commitment-ball" aria-label="Balon de compromisos"></div>
+      </div>
+      <div class="trophy">
+        <span>🏆</span>
+        <h3 id="finalTeamName">Equipo</h3>
+        <p><strong id="finalScore">0</strong> puntos de juego limpio intercultural</p>
+        <p id="finalMessage">Completen estaciones para levantar la Copa de la Interculturalidad.</p>
+      </div>
+      <button class="stamp-btn" data-station="5" type="button" disabled>Sello automatico</button>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Todos los derechos reservados. Creador: Jhonatan Solano</p>
+  </footer>
+
+  <div id="leaderboardModal" class="modal" hidden>
+    <section class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
+      <h2 id="leaderboardTitle">Tabla final</h2>
+      <p class="modal__intro">Equipos ordenados de mayor a menor puntaje. Cada pais queda asignado una sola vez durante el juego.</p>
+      <div id="leaderboardList" class="leaderboard-list"></div>
+      <button id="resetGameBtn" class="action-btn" type="button">Reiniciar juego</button>
+    </section>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="Script.js"></script>
+</body>
+</html>
