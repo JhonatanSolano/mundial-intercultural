@@ -28,7 +28,7 @@ App web estatica para una jornada de interculturalidad con estetica mundialista.
   - Memoria cultural: 20 puntos en 2 minutos, emparejando pais con capital. Si completan todo en 60 segundos o menos ganan 20 puntos; si completan todo despues del primer minuto ganan 10 puntos. La ficha de capital no muestra el pais.
   - Adivina el pais: 20 puntos, pero desde la tercera pista baja el puntaje y cada intento incorrecto descuenta 3 puntos.
   - Tarjetas de convivencia: 20 puntos en 1 minuto y medio, segun respuestas correctas. Las fichas abiertas pero no contestadas y las fichas cerradas no suman puntos.
-  - Musica por pais: 15 puntos en 25 segundos, con tres canciones aleatorias que se responden una por una.
+  - Musica por pais: 15 puntos en 25 segundos, con tres canciones muy aleatorias que priorizan paises menos repetidos y se responden una por una.
   - Cierre: 20 puntos con minimo 5 frases.
 - La actividad 1 primero sortea pais y despues activa cronometro.
 - Las demas actividades estan bloqueadas hasta activar su cronometro.

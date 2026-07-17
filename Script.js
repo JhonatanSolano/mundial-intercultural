@@ -22,6 +22,7 @@ const state = {
 };
 
 let audioEngine = null;
+let countryAudioToken = 0;
 
 function $(selector){ return document.querySelector(selector); }
 function $all(selector){ return [...document.querySelectorAll(selector)]; }
@@ -56,6 +57,27 @@ function activeTeam(){
 function shuffled(list, salt = 0){
   const team = activeTeam();
   const random = rng((team ? team.seed : 2026) + salt);
+  const copy = [...list];
+  for(let i = copy.length - 1; i > 0; i--){
+    const j = Math.floor(random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function randomSalt(){
+  if(window.crypto && window.crypto.getRandomValues){
+    const values = new Uint32Array(1);
+    window.crypto.getRandomValues(values);
+    return values[0];
+  }
+  return (Date.now() ^ Math.floor(Math.random() * 0xFFFFFFFF)) >>> 0;
+}
+
+function shuffledWithEntropy(list, salt = 0){
+  const team = activeTeam();
+  const seed = ((team ? team.seed : 2026) ^ randomSalt() ^ Date.now() ^ salt) >>> 0;
+  const random = rng(seed);
   const copy = [...list];
   for(let i = copy.length - 1; i > 0; i--){
     const j = Math.floor(random() * (i + 1));
@@ -615,8 +637,14 @@ function startSoundGame(){
 function buildSoundChallenge(){
   const container = $("#soundChallenge");
   container.innerHTML = "";
-  state.sound = { active: false, done: false, opened: new Set(), correct: new Set(), currentIndex: 0, resumeGeneralAfter: state.sound.resumeGeneralAfter || false };
-  const tracks = shuffled(COUNTRIES, 81).slice(0, 3);
+  state.sound = { active: false, done: false, opened: new Set(), correct: new Set(), currentIndex: 0, resumeGeneralAfter: state.sound.resumeGeneralAfter || false, tracks: [] };
+  const tracks = selectSoundTracks();
+  state.sound.tracks = tracks.map(country => country.id);
+  const team = activeTeam();
+  if(team){
+    team.soundTrackIds = [...state.sound.tracks];
+    saveTournament();
+  }
   tracks.forEach((country, index) => {
     const card = document.createElement("article");
     card.className = "sound-card is-disabled";
@@ -628,9 +656,9 @@ function buildSoundChallenge(){
       <button class="action-btn action-btn--small play-track" type="button">Reproducir</button>
       <div class="sound-options"></div>
     `;
-    card.querySelector(".play-track").addEventListener("click", () => playMusicTrack(country, index));
+    card.querySelector(".play-track").addEventListener("click", event => playMusicTrack(country, index, event.currentTarget));
     const options = card.querySelector(".sound-options");
-    shuffled(COUNTRIES, 91 + index).forEach(option => {
+    shuffledWithEntropy(COUNTRIES, 91 + index).forEach(option => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "sound-option";
@@ -642,28 +670,63 @@ function buildSoundChallenge(){
   });
 }
 
-async function playMusicTrack(country, index){
+function selectSoundTracks(){
+  const usage = new Map(COUNTRIES.map(country => [country.id, 0]));
+  state.tournament.teams.forEach(team => {
+    (team.soundTrackIds || []).forEach(id => usage.set(id, (usage.get(id) || 0) + 1));
+  });
+  const ordered = shuffledWithEntropy(COUNTRIES, 81).sort((a, b) => {
+    const byUsage = (usage.get(a.id) || 0) - (usage.get(b.id) || 0);
+    return byUsage || 0;
+  });
+  return ordered.slice(0, 3);
+}
+
+async function playMusicTrack(country, index, triggerBtn){
   if(!state.sound.active || state.sound.done || index !== state.sound.currentIndex) return;
   const audio = $("#countryAudio");
+  const token = ++countryAudioToken;
   state.sound.resumeGeneralAfter = state.sound.resumeGeneralAfter || isGeneralMusicPlaying();
   pauseGeneralMusic();
+  if(audioEngine && audioEngine.enabled) audioEngine.stop();
+  if(!audio){
+    $("#countryAudioHint").textContent = `No encontre el reproductor de la cancion ${index + 1}. Uso musica generada sin revelar el pais.`;
+    await startGeneratedAudio();
+    ensureAudio().setCountry(country);
+    return;
+  }
   if(audio){
     audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    audio.src = `assets/music/${country.id}.mp3`;
+    audio.preload = "auto";
+    audio.volume = 1;
     audio.currentTime = 0;
+    audio.load();
   }
-  audio.src = `assets/music/${country.id}.mp3`;
-  audio.play().then(() => {
+  if(triggerBtn) triggerBtn.disabled = true;
+  $("#countryAudioHint").textContent = `Cancion ${index + 1}: cargando audio local...`;
+  try {
+    await audio.play();
+    if(token !== countryAudioToken) return;
     $("#countryAudioHint").textContent = `Cancion ${index + 1}: reproduciendo audio local.`;
-  }).catch(async () => {
+  } catch(error) {
+    if(token !== countryAudioToken) return;
     $("#countryAudioHint").textContent = `No encontre el MP3 de la cancion ${index + 1}. Uso musica generada sin revelar el pais.`;
     await startGeneratedAudio();
     ensureAudio().setCountry(country);
-  });
+  } finally {
+    if(triggerBtn && state.sound.active && !state.sound.done && index === state.sound.currentIndex){
+      triggerBtn.disabled = false;
+    }
+  }
 }
 
 function answerSoundTrack(card, btn, targetCountry, option){
   const cardIndex = Number(card.dataset.index);
   if(!state.sound.active || state.sound.done || cardIndex !== state.sound.currentIndex || state.sound.opened.has(card.dataset.index)) return;
+  stopCurrentCountryAudio();
   state.sound.opened.add(card.dataset.index);
   card.classList.add("done");
   card.querySelectorAll(".sound-option").forEach(optionBtn => optionBtn.disabled = true);
@@ -696,6 +759,18 @@ function activateSoundCard(index){
   });
 }
 
+function stopCurrentCountryAudio(){
+  countryAudioToken += 1;
+  const audio = $("#countryAudio");
+  if(audio){
+    audio.pause();
+    audio.currentTime = 0;
+  }
+  if(audioEngine && audioEngine.enabled){
+    audioEngine.stop();
+  }
+}
+
 function finishSoundGame(){
   clearTimer("sound");
   state.sound.active = false;
@@ -710,6 +785,7 @@ function finishSoundGame(){
 }
 
 function stopSoundActivityAudio(){
+  countryAudioToken += 1;
   const audio = $("#countryAudio");
   if(audio){
     audio.pause();
