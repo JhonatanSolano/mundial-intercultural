@@ -384,6 +384,7 @@ function startMemory(){
   if(!ensureTeam() || isLocked("memory")) return;
   buildMemory();
   state.memory.active = true;
+  state.memory.startedAt = Date.now();
   $all(".memory-card").forEach(card => card.classList.remove("is-disabled"));
   $("#memoryStatus").textContent = "Ronda activa: formen parejas pais-capital y griten la capital al encontrarla.";
   startTimer("memory", 120, $("#memoryTimer"), () => finishMemory(false));
@@ -395,10 +396,15 @@ function finishMemory(completed){
   clearTimer("memory");
   lockActivity("memory");
   $all(".memory-card").forEach(card => card.classList.add("is-disabled"));
-  const score = completed ? ACTIVITY_MAX.memory : Math.round((state.memory.matches / 10) * ACTIVITY_MAX.memory);
+  const elapsedMs = state.memory.startedAt ? Date.now() - state.memory.startedAt : 120000;
+  const score = completed
+    ? (elapsedMs <= 60000 ? ACTIVITY_MAX.memory : Math.round(ACTIVITY_MAX.memory / 2))
+    : Math.round((state.memory.matches / 10) * ACTIVITY_MAX.memory);
   setActivityScore("memory", score);
   autoSealStation("memory");
-  $("#memoryStatus").textContent = completed ? "Ronda completa: 20/20. Estacion sellada automaticamente." : `Tiempo terminado: ${score}/20. Estacion sellada automaticamente.`;
+  $("#memoryStatus").textContent = completed
+    ? `Ronda completa: ${score}/20. ${elapsedMs <= 60000 ? "Lo lograron en el primer minuto." : "Lo lograron despues del primer minuto."} Estacion sellada automaticamente.`
+    : `Tiempo terminado: ${score}/20. Estacion sellada automaticamente.`;
 }
 
 function buildGuessRound(){
@@ -974,7 +980,7 @@ function renderLeaderboard(){
     row.innerHTML = `
       <span class="leaderboard-card__rank">${index + 1}</span>
       <span class="leaderboard-card__flag">${country ? country.flag : "◌"}</span>
-      <div><h3>${team.name}</h3><p>${country ? `${country.flag} ${country.name}` : "Pais sin sortear"}</p></div>
+      <div><h3>${team.name}</h3><p>${country ? country.name : "Pais sin sortear"}</p></div>
       <strong>${team.score}/100</strong>
     `;
     list.appendChild(row);
