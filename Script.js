@@ -14,7 +14,7 @@ const state = {
   activeTeamKey: "",
   tournament: { teams: [] },
   memory: { lock: false, first: null, matches: 0, active: false, done: false },
-  guess: { country: null, active: false, done: false, revealed: 0 },
+  guess: { country: null, active: false, done: false, revealed: 0, wrongAttempts: 0 },
   scenario: { active: false, done: false, opened: new Set(), answered: new Set(), correct: new Set() },
   sound: { active: false, done: false, opened: new Set(), currentIndex: 0, resumeGeneralAfter: false },
   commitment: { active: false, done: false },
@@ -441,11 +441,12 @@ function buildGuessRound(){
     country: shuffled([teamCountry, ...candidates.slice(0, 9)], Date.now() % 100000)[0],
     active: true,
     done: false,
-    revealed: 0
+    revealed: 0,
+    wrongAttempts: 0
   };
   $("#guessInput").value = "";
   $("#guessFeedback").textContent = "";
-  $("#guessStatus").textContent = "Ronda activa: cada pista desde la tercera baja el puntaje.";
+  $("#guessStatus").textContent = "Ronda activa: cada pista desde la tercera baja el puntaje. Cada intento incorrecto tambien descuenta.";
   const clues = [
     `Bandera: ${state.guess.country.flag}`,
     `Region: ${state.guess.country.region}`,
@@ -474,16 +475,18 @@ function revealGuessClue(btn, clue, index){
   state.guess.revealed += 1;
   btn.classList.add("revealed");
   btn.innerHTML = `<span>Pista ${index + 1}</span><strong>${clue}</strong>`;
-  $("#guessStatus").textContent = `Pistas abiertas: ${state.guess.revealed}. Puntaje posible: ${guessPotentialScore()}/20`;
+  $("#guessStatus").textContent = `Pistas abiertas: ${state.guess.revealed}. Intentos fallidos: ${state.guess.wrongAttempts || 0}. Puntaje posible: ${guessPotentialScore()}/20`;
 }
 
 function guessPotentialScore(){
   const r = Math.max(1, state.guess.revealed);
-  if(r <= 2) return 20;
-  if(r === 3) return 15;
-  if(r === 4) return 10;
-  if(r === 5) return 5;
-  return 3;
+  let base = 3;
+  if(r <= 2) base = 20;
+  else if(r === 3) base = 15;
+  else if(r === 4) base = 10;
+  else if(r === 5) base = 5;
+  const wrongPenalty = (state.guess.wrongAttempts || 0) * 3;
+  return Math.max(0, base - wrongPenalty);
 }
 
 function checkGuess(){
@@ -493,7 +496,10 @@ function checkGuess(){
   if(guess && (guess === answer || answer.includes(guess))){
     finishGuess(true);
   } else {
-    $("#guessFeedback").textContent = "Casi. Consulten al equipo, destapen otra pista si lo necesitan y vuelvan a responder antes de que termine el tiempo.";
+    state.guess.wrongAttempts = (state.guess.wrongAttempts || 0) + 1;
+    $("#guessFeedback").textContent = `Intento fallido ${state.guess.wrongAttempts}: se descuentan 3 puntos. Consulten al equipo antes de volver a responder.`;
+    $("#guessStatus").textContent = `Pistas abiertas: ${state.guess.revealed}. Intentos fallidos: ${state.guess.wrongAttempts}. Puntaje posible: ${guessPotentialScore()}/20`;
+    $("#guessInput").value = "";
   }
 }
 
@@ -1043,7 +1049,7 @@ function resetGame(){
 
 function resetRoundState(){
   state.memory = { lock: false, first: null, matches: 0, active: false, done: false };
-  state.guess = { country: null, active: false, done: false, revealed: 0 };
+  state.guess = { country: null, active: false, done: false, revealed: 0, wrongAttempts: 0 };
   state.scenario = { active: false, done: false, opened: new Set(), answered: new Set(), correct: new Set() };
   state.sound = { active: false, done: false, opened: new Set(), correct: new Set(), currentIndex: 0, resumeGeneralAfter: false };
   state.commitment = { active: false, done: false };
