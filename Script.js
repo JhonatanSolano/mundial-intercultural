@@ -27,6 +27,7 @@ let countryAudioToken = 0;
 const soundAudioCache = new Map();
 let resumeGeneralMusicOnReturn = false;
 let teamMessageTimer = null;
+let welcomeNoticeTimer = null;
 
 function $(selector){ return document.querySelector(selector); }
 function $all(selector){ return [...document.querySelectorAll(selector)]; }
@@ -201,10 +202,35 @@ function showTemporaryTeamMessage(message, duration = 5000){
   el.textContent = message;
   el.classList.remove("team-note--error");
   el.classList.add("team-note--welcome");
+  showWelcomeNotice(message, duration);
   teamMessageTimer = setTimeout(() => {
     const team = activeTeam();
     showTeamMessage(team ? `Equipo guardado: ${team.name}. Máximo total: 100 puntos.` : "Cada nombre queda guardado en este PC y no se puede repetir.");
   }, duration);
+}
+
+function showWelcomeNotice(message, duration = 5000){
+  const notice = $("#welcomeNotice");
+  if(!notice) return;
+  clearTimeout(welcomeNoticeTimer);
+  $("#welcomeNoticeTitle").textContent = message;
+  $("#welcomeNoticeText").textContent = "Comiencen por la actividad 1.";
+  notice.hidden = false;
+  notice.classList.remove("welcome-notice--show");
+  void notice.offsetWidth;
+  notice.classList.add("welcome-notice--show");
+  welcomeNoticeTimer = setTimeout(() => {
+    notice.hidden = true;
+    notice.classList.remove("welcome-notice--show");
+  }, duration);
+}
+
+function closeWelcomeNotice(){
+  clearTimeout(welcomeNoticeTimer);
+  const notice = $("#welcomeNotice");
+  if(!notice) return;
+  notice.hidden = true;
+  notice.classList.remove("welcome-notice--show");
 }
 
 function ensureTeam(){
@@ -214,6 +240,7 @@ function ensureTeam(){
 }
 
 function saveTeam(){
+  closeWelcomeNotice();
   closeFinishCelebration();
   const name = $("#teamName").value.trim();
   if(!name){
@@ -255,7 +282,7 @@ function saveTeam(){
   saveTournament();
   refreshHeader();
   $("#teamName").value = "";
-  showTemporaryTeamMessage(`¡Bienvenidos al juego, ${team.name}! Comiencen por la actividad 1.`);
+  showTemporaryTeamMessage(`¡Bienvenidos al juego, ${team.name}!`);
   renderCommitments();
   goToStation(0);
 }
