@@ -751,6 +751,7 @@ button:disabled{
 }
 
 .modal[hidden]{ display: none; }
+.celebration[hidden]{ display: none; }
 
 .modal__panel{
   width: min(920px, 100%);
@@ -829,6 +830,95 @@ button:disabled{
   border-radius: var(--radius);
   background: white;
   color: var(--muted);
+}
+
+.celebration{
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  overflow: hidden;
+  background: rgba(5, 24, 18, 0.72);
+}
+
+.celebration__panel{
+  position: relative;
+  width: min(520px, 100%);
+  padding: 34px 24px 26px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--cream);
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.celebration__ball{
+  display: inline-grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--yellow);
+  font-size: 2.2rem;
+}
+
+.celebration__panel h2{
+  margin: 0 0 8px;
+}
+
+.celebration__panel p{
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.confetti-field{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.confetti-field span{
+  position: absolute;
+  top: -18px;
+  width: 9px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--red);
+  opacity: 0;
+}
+
+.confetti-field span:nth-child(3n){ background: var(--yellow); }
+.confetti-field span:nth-child(3n + 1){ background: var(--green); }
+.confetti-field span:nth-child(4n){ height: 14px; background: var(--blue); }
+
+.celebration--burst .confetti-field span{
+  animation: confetti-fall 1.9s ease-out forwards;
+}
+
+.confetti-field span:nth-child(1){ left: 6%; animation-delay: 0.02s; }
+.confetti-field span:nth-child(2){ left: 12%; animation-delay: 0.12s; }
+.confetti-field span:nth-child(3){ left: 20%; animation-delay: 0.04s; }
+.confetti-field span:nth-child(4){ left: 28%; animation-delay: 0.18s; }
+.confetti-field span:nth-child(5){ left: 35%; animation-delay: 0.07s; }
+.confetti-field span:nth-child(6){ left: 43%; animation-delay: 0.14s; }
+.confetti-field span:nth-child(7){ left: 50%; animation-delay: 0.03s; }
+.confetti-field span:nth-child(8){ left: 57%; animation-delay: 0.16s; }
+.confetti-field span:nth-child(9){ left: 64%; animation-delay: 0.08s; }
+.confetti-field span:nth-child(10){ left: 71%; animation-delay: 0.2s; }
+.confetti-field span:nth-child(11){ left: 78%; animation-delay: 0.05s; }
+.confetti-field span:nth-child(12){ left: 84%; animation-delay: 0.13s; }
+.confetti-field span:nth-child(13){ left: 90%; animation-delay: 0.1s; }
+.confetti-field span:nth-child(14){ left: 96%; animation-delay: 0.22s; }
+.confetti-field span:nth-child(15){ left: 2%; animation-delay: 0.17s; }
+
+@keyframes confetti-fall{
+  0%{ opacity: 0; transform: translateY(-20px) rotate(0deg); }
+  12%{ opacity: 1; }
+  100%{ opacity: 0; transform: translateY(360px) rotate(540deg); }
 }
 
 @media (max-width: 760px){

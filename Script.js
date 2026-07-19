@@ -26,6 +26,7 @@ let audioEngine = null;
 let countryAudioToken = 0;
 const soundAudioCache = new Map();
 let resumeGeneralMusicOnReturn = false;
+let teamMessageTimer = null;
 
 function $(selector){ return document.querySelector(selector); }
 function $all(selector){ return [...document.querySelectorAll(selector)]; }
@@ -193,6 +194,15 @@ function showTeamMessage(message, isError = false){
   el.classList.toggle("team-note--error", isError);
 }
 
+function showTemporaryTeamMessage(message, duration = 5000){
+  clearTimeout(teamMessageTimer);
+  showTeamMessage(message, false);
+  teamMessageTimer = setTimeout(() => {
+    const team = activeTeam();
+    showTeamMessage(team ? `Equipo guardado: ${team.name}. Máximo total: 100 puntos.` : "Cada nombre queda guardado en este PC y no se puede repetir.");
+  }, duration);
+}
+
 function ensureTeam(){
   if(activeTeam()) return true;
   showTeamMessage("Guarden el equipo antes de iniciar actividades.", true);
@@ -200,6 +210,7 @@ function ensureTeam(){
 }
 
 function saveTeam(){
+  closeFinishCelebration();
   const name = $("#teamName").value.trim();
   if(!name){
     showTeamMessage("Escribe un nombre de equipo para continuar.", true);
@@ -239,6 +250,8 @@ function saveTeam(){
   }
   saveTournament();
   refreshHeader();
+  $("#teamName").value = "";
+  showTemporaryTeamMessage(`¡Bienvenidos al juego, ${team.name}! Comiencen por la actividad 1.`);
   renderCommitments();
   goToStation(0);
 }
@@ -909,7 +922,7 @@ function addCommitment(){
 
 function finishCommitment(){
   const team = activeTeam();
-  if(!team) return;
+  if(!team || state.commitment.done || isLocked("commitment")) return;
   clearTimer("commitment");
   state.commitment.active = false;
   state.commitment.done = true;
@@ -920,6 +933,21 @@ function finishCommitment(){
   $("#commitmentStatus").textContent = team.commitments.length >= 5
     ? "Cierre completo: 20/20. Estación sellada automáticamente."
     : `Tiempo terminado: ${score}/20 por ${team.commitments.length} frases. Estación sellada.`;
+  showFinishCelebration();
+}
+
+function showFinishCelebration(){
+  const modal = $("#finishCelebration");
+  if(!modal) return;
+  modal.hidden = false;
+  modal.classList.remove("celebration--burst");
+  void modal.offsetWidth;
+  modal.classList.add("celebration--burst");
+}
+
+function closeFinishCelebration(){
+  const modal = $("#finishCelebration");
+  if(modal) modal.hidden = true;
 }
 
 function updateFinalMessage(){
@@ -1223,6 +1251,7 @@ function resetGame(){
   state.tournament = { teams: [] };
   resetRoundState();
   $("#leaderboardModal").hidden = true;
+  closeFinishCelebration();
   buildAllGames();
   refreshHeader();
   goToStation(0);
@@ -1269,6 +1298,7 @@ function wireEvents(){
   $("#soundToggle").addEventListener("click", toggleSound);
   $("#finishGameBtn").addEventListener("click", finishGame);
   $("#resetGameBtn").addEventListener("click", resetGame);
+  $("#closeCelebrationBtn").addEventListener("click", closeFinishCelebration);
   $all(".stamp-btn").forEach(btn => btn.addEventListener("click", () => stampStation(Number(btn.dataset.station))));
 }
 
