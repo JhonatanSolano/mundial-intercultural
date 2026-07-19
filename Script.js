@@ -192,11 +192,15 @@ function showTeamMessage(message, isError = false){
   const el = $("#teamSeedText");
   el.textContent = message;
   el.classList.toggle("team-note--error", isError);
+  el.classList.remove("team-note--welcome");
 }
 
 function showTemporaryTeamMessage(message, duration = 5000){
+  const el = $("#teamSeedText");
   clearTimeout(teamMessageTimer);
-  showTeamMessage(message, false);
+  el.textContent = message;
+  el.classList.remove("team-note--error");
+  el.classList.add("team-note--welcome");
   teamMessageTimer = setTimeout(() => {
     const team = activeTeam();
     showTeamMessage(team ? `Equipo guardado: ${team.name}. Máximo total: 100 puntos.` : "Cada nombre queda guardado en este PC y no se puede repetir.");
