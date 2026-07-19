@@ -22,8 +22,12 @@ App web estática para una jornada de interculturalidad con estética mundialist
 - No se puede repetir el nombre de equipo. Si alguien intenta guardar un nombre ya usado, aparece un mensaje y debe cambiarlo.
 - Cada equipo recibe una semilla aleatoria guardada localmente: fichas, órdenes, pistas y tiempos cambian por grupo y no quedan fáciles de copiar.
 - En las actividades con países, excepto memoria, la selección prioriza países menos usados para que participen todos y no se repitan tanto durante la jornada.
-- Los países no se repiten entre equipos mientras el juego siga guardado.
+- En el sorteo de la actividad 1, los países no se repiten entre equipos mientras el juego siga guardado.
 - Todos los juegos trabajan 10 países: Argentina, Brasil, Colombia, Ecuador, Haití, México, Panamá, Paraguay, Perú y Uruguay.
+- Las actividades 1, 3 y 5 usan esos mismos 10 países:
+  - Actividad 1: sortea banderas sin repetir país entre equipos mientras haya países disponibles.
+  - Actividad 3: usa una cola aleatoria de países para las pistas y evita repetir demasiado antes de que salgan los demás.
+  - Actividad 5: usa una cola aleatoria de canciones de países; `electronica.mp3` queda solo como música de fondo.
 - El puntaje máximo total es 100:
   - Sorteo: 5 puntos. El equipo sortea una bandera y tiene 20 segundos para dibujarla y escribir el país. Al terminar, se evalúa con 0, 3 o 5 puntos.
   - Memoria cultural: 20 puntos en 2 minutos. La ronda sale aleatoriamente entre país-capital o país-comida típica. Si completan todo en 60 segundos o menos ganan 20 puntos; si completan todo después del primer minuto ganan 10 puntos.

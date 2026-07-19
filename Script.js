@@ -12,7 +12,7 @@ const STATIONS = [
 
 const state = {
   activeTeamKey: "",
-  tournament: { teams: [], soundCountryQueue: [], soundCountryHistory: [] },
+  tournament: { teams: [], guessCountryQueue: [], guessCountryHistory: [], soundCountryQueue: [], soundCountryHistory: [] },
   draw: { active: false, awaitingScore: false, done: false },
   memory: { lock: false, first: null, matches: 0, active: false, done: false },
   guess: { country: null, active: false, done: false, revealed: 0, wrongAttempts: 0 },
@@ -117,7 +117,9 @@ function newLocks(){
 
 function loadTournament(){
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  state.tournament = saved.tournament || { teams: [], soundCountryQueue: [], soundCountryHistory: [] };
+  state.tournament = saved.tournament || { teams: [], guessCountryQueue: [], guessCountryHistory: [], soundCountryQueue: [], soundCountryHistory: [] };
+  state.tournament.guessCountryQueue = Array.isArray(state.tournament.guessCountryQueue) ? state.tournament.guessCountryQueue : [];
+  state.tournament.guessCountryHistory = Array.isArray(state.tournament.guessCountryHistory) ? state.tournament.guessCountryHistory : [];
   state.tournament.soundCountryQueue = Array.isArray(state.tournament.soundCountryQueue) ? state.tournament.soundCountryQueue : [];
   state.tournament.soundCountryHistory = Array.isArray(state.tournament.soundCountryHistory) ? state.tournament.soundCountryHistory : [];
   state.activeTeamKey = saved.activeTeamKey || "";
@@ -133,6 +135,11 @@ function loadTournament(){
   if(!state.tournament.soundCountryHistory.length){
     state.tournament.soundCountryHistory = state.tournament.teams
       .flatMap(team => team.soundCountryIds || team.soundTrackIds || [])
+      .slice(-30);
+  }
+  if(!state.tournament.guessCountryHistory.length){
+    state.tournament.guessCountryHistory = state.tournament.teams
+      .flatMap(team => team.guessCountryIds || [])
       .slice(-30);
   }
 }
@@ -557,11 +564,8 @@ function buildGuessRound(){
   if(!ensureTeam() || isLocked("guess")) return;
   const team = activeTeam();
   const teamCountry = selectedCountry();
-  const personalUsed = new Set([teamCountry.id, ...(team.guessCountryIds || [])]);
-  const candidates = usageBalancedCountries("guess", personalUsed, 41);
-  const pool = candidates.length >= 1 ? candidates : usageBalancedCountries("guess", new Set([teamCountry.id]), 42);
   state.guess = {
-    country: pool[0],
+    country: selectGuessCountry(teamCountry.id),
     active: true,
     done: false,
     revealed: 0,
@@ -590,6 +594,31 @@ function buildGuessRound(){
   startTimer("guess", 30 + (activeTeam().seed % 16), $("#guessTimer"), () => finishGuess(false));
   updateMusicCountry(state.guess.country);
   if(audioEngine && audioEngine.enabled) audioEngine.setCountry(state.guess.country);
+}
+
+function selectGuessCountry(excludedCountryId = ""){
+  while(true){
+    if(!state.tournament.guessCountryQueue.length){
+      refillGuessCountryQueue(new Set([excludedCountryId].filter(Boolean)));
+    }
+    const id = state.tournament.guessCountryQueue.shift();
+    const country = countryById(id);
+    if(country && country.id !== excludedCountryId){
+      state.tournament.guessCountryHistory.push(country.id);
+      state.tournament.guessCountryHistory = state.tournament.guessCountryHistory.slice(-30);
+      saveTournament();
+      return country;
+    }
+  }
+}
+
+function refillGuessCountryQueue(excludedIds = new Set()){
+  const recent = new Set((state.tournament.guessCountryHistory || []).slice(-3));
+  let pool = COUNTRIES.filter(country => !excludedIds.has(country.id) && !recent.has(country.id));
+  if(!pool.length){
+    pool = COUNTRIES.filter(country => !excludedIds.has(country.id));
+  }
+  state.tournament.guessCountryQueue = shuffledWithEntropy(pool, 41).map(country => country.id);
 }
 
 function revealGuessClue(btn, clue, index){
@@ -1305,7 +1334,7 @@ function resetGame(){
   }
   localStorage.removeItem(STORAGE_KEY);
   state.activeTeamKey = "";
-  state.tournament = { teams: [], soundCountryQueue: [], soundCountryHistory: [] };
+  state.tournament = { teams: [], guessCountryQueue: [], guessCountryHistory: [], soundCountryQueue: [], soundCountryHistory: [] };
   resetRoundState();
   $("#leaderboardModal").hidden = true;
   closeFinishCelebration();
