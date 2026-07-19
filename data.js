@@ -2,17 +2,24 @@ const COUNTRIES = [
   {
     id: "colombia",
     name: "Colombia",
-    capital: "Bogota",
+    capital: "Bogotá",
     flag: "🇨🇴",
     flagImage: "assets/flags/colombia.svg",
-    region: "Suramerica",
-    language: "Espanol y mas de 60 lenguas nativas",
-    greeting: "Que mas / Quiubo",
+    region: "Suramérica",
+    language: "Español y más de 60 lenguas nativas",
+    greeting: "¿Qué más? / Quiubo",
     food: "Arepa",
     rhythm: "Cumbia",
     celebration: "Carnaval de Barranquilla",
-    value: "La alegria compartida tambien puede ser una forma de hospitalidad.",
-    clue: "Pais andino y caribeno, con enorme biodiversidad y muchas formas de hablar el espanol.",
+    value: "La alegría compartida también puede ser una forma de hospitalidad.",
+    clue: "País andino y caribeño, con enorme biodiversidad y muchas formas de hablar el español.",
+    guessClues: [
+      "Tiene costa en dos océanos y una cordillera dividida en tres ramas.",
+      "En su vida cotidiana conviven acentos muy distintos y decenas de lenguas indígenas.",
+      "Una celebración caribeña suya fue reconocida como patrimonio cultural inmaterial.",
+      "Su música tradicional mezcla raíces indígenas, africanas y europeas.",
+      "En su gastronomía popular aparece la arepa en muchas regiones."
+    ],
     music: { tempo: 106, scale: [392, 440, 523, 587, 659], drum: "cumbia" }
   },
   {
@@ -21,78 +28,113 @@ const COUNTRIES = [
     capital: "Brasilia",
     flag: "🇧🇷",
     flagImage: "assets/flags/brasil.svg",
-    region: "Suramerica",
-    language: "Portugues",
+    region: "Suramérica",
+    language: "Portugués",
     greeting: "Oi / Tudo bem?",
     food: "Feijoada",
     rhythm: "Samba",
     celebration: "Carnaval",
     value: "Celebrar juntos no borra las diferencias: las vuelve visibles y compartidas.",
-    clue: "Pais gigante de portugues, samba, carnaval y muchas raices afroamericanas.",
+    clue: "País gigante de portugués, samba, carnaval y muchas raíces afroamericanas.",
+    guessClues: [
+      "Es el país más extenso de América del Sur.",
+      "Su lengua oficial lo diferencia de la mayoría de sus vecinos regionales.",
+      "Su carnaval combina música, baile, barrios y memoria afrodescendiente.",
+      "Parte de la Amazonía está dentro de su territorio.",
+      "La feijoada es uno de sus platos más reconocidos."
+    ],
     music: { tempo: 120, scale: [349, 392, 440, 523, 587], drum: "samba" }
   },
   {
     id: "peru",
-    name: "Peru",
+    name: "Perú",
     capital: "Lima",
     flag: "🇵🇪",
     flagImage: "assets/flags/peru.svg",
-    region: "Suramerica",
-    language: "Espanol, quechua y aimara",
+    region: "Suramérica",
+    language: "Español, quechua y aimara",
     greeting: "Allinllachu / Hola",
     food: "Ceviche",
     rhythm: "Festejo",
     celebration: "Inti Raymi",
-    value: "La interculturalidad tambien vive en reconocer lenguas originarias actuales.",
-    clue: "Pais andino y costero, de ceviche, quechua, Inti Raymi y ritmos afroperuanos.",
+    value: "La interculturalidad también vive en reconocer lenguas originarias actuales.",
+    clue: "País andino y costero, de ceviche, quechua, Inti Raymi y ritmos afroperuanos.",
+    guessClues: [
+      "Su historia andina sigue viva en lenguas como el quechua y el aimara.",
+      "Tiene costa, sierra y selva con tradiciones muy diferentes entre sí.",
+      "Una fiesta solar de origen andino reúne memoria, música y ritualidad.",
+      "Su cocina marina es reconocida internacionalmente.",
+      "El festejo expresa una herencia afroperuana muy importante."
+    ],
     music: { tempo: 110, scale: [330, 392, 440, 494, 659], drum: "festejo" }
   },
   {
     id: "panama",
-    name: "Panama",
-    capital: "Ciudad de Panama",
+    name: "Panamá",
+    capital: "Ciudad de Panamá",
     flag: "🇵🇦",
     flagImage: "assets/flags/panama.svg",
-    region: "Centroamerica",
-    language: "Espanol y lenguas indigenas",
-    greeting: "Que sopa?",
+    region: "Centroamérica",
+    language: "Español y lenguas indígenas",
+    greeting: "¿Qué sopa?",
     food: "Sancocho",
     rhythm: "Tamborito",
     celebration: "Carnavales",
-    value: "Ser puente entre regiones tambien implica mezclar historias y acentos.",
-    clue: "Pais puente entre mares y continentes, con tamborito, canal y carnavales.",
+    value: "Ser puente entre regiones también implica mezclar historias y acentos.",
+    clue: "País puente entre mares y continentes, con tamborito, canal y carnavales.",
+    guessClues: [
+      "Su ubicación conecta América Central con América del Sur.",
+      "Un paso interoceánico marcó su historia económica y cultural.",
+      "Tiene tradiciones afrocaribeñas, indígenas y mestizas muy visibles.",
+      "El tamborito es una expresión musical y festiva representativa.",
+      "El sancocho es una sopa muy asociada con su cocina popular."
+    ],
     music: { tempo: 118, scale: [330, 392, 440, 523, 587], drum: "tamborito" }
   },
   {
     id: "mexico",
-    name: "Mexico",
-    capital: "Ciudad de Mexico",
+    name: "México",
+    capital: "Ciudad de México",
     flag: "🇲🇽",
     flagImage: "assets/flags/mexico.svg",
-    region: "Norte/Centroamerica cultural",
-    language: "Espanol y lenguas originarias",
-    greeting: "Que onda?",
+    region: "Norteamérica y Centroamérica cultural",
+    language: "Español y lenguas originarias",
+    greeting: "¿Qué onda?",
     food: "Tacos",
     rhythm: "Mariachi",
-    celebration: "Dia de Muertos",
-    value: "La memoria de quienes estuvieron antes tambien hace parte de la cultura viva.",
-    clue: "Pais de tacos, mariachi, Dia de Muertos, lenguas originarias y plazas llenas de color.",
+    celebration: "Día de Muertos",
+    value: "La memoria de quienes estuvieron antes también hace parte de la cultura viva.",
+    clue: "País de tacos, mariachi, Día de Muertos, lenguas originarias y plazas llenas de color.",
+    guessClues: [
+      "Su cultura actual dialoga con herencias indígenas muy antiguas.",
+      "Una celebración sobre la muerte reúne memoria, altares, comida y flores.",
+      "Su música de mariachi fue reconocida como patrimonio cultural inmaterial.",
+      "Su capital es una de las ciudades más grandes de América.",
+      "El taco es una de sus comidas más conocidas."
+    ],
     music: { tempo: 112, scale: [392, 494, 523, 659, 784], drum: "mariachi" }
   },
   {
     id: "haiti",
-    name: "Haiti",
-    capital: "Puerto Principe",
+    name: "Haití",
+    capital: "Puerto Príncipe",
     flag: "🇭🇹",
     flagImage: "assets/flags/haiti.svg",
     region: "Caribe",
-    language: "Criollo haitiano y frances",
+    language: "Criollo haitiano y francés",
     greeting: "Bonjou",
     food: "Griot",
     rhythm: "Kompa",
     celebration: "Carnaval de Jacmel",
-    value: "El Caribe tambien habla muchas lenguas y guarda memorias de resistencia.",
-    clue: "Pais caribeno de criollo haitiano, kompa, griot y una historia profunda de independencia.",
+    value: "El Caribe también habla muchas lenguas y guarda memorias de resistencia.",
+    clue: "País caribeño de criollo haitiano, kompa, griot y una historia profunda de independencia.",
+    guessClues: [
+      "Comparte una isla caribeña con otro Estado.",
+      "Su vida cotidiana usa ampliamente el criollo, además del francés.",
+      "Su historia de independencia tiene un lugar central en América y el Caribe.",
+      "El kompa es uno de sus sonidos populares más reconocidos.",
+      "El griot es un plato tradicional asociado con celebraciones."
+    ],
     music: { tempo: 104, scale: [330, 392, 440, 523, 659], drum: "kompa" }
   },
   {
@@ -101,14 +143,21 @@ const COUNTRIES = [
     capital: "Quito",
     flag: "🇪🇨",
     flagImage: "assets/flags/ecuador.svg",
-    region: "Suramerica",
-    language: "Espanol y kichwa",
+    region: "Suramérica",
+    language: "Español y kichwa",
     greeting: "Imanalla / Hola",
     food: "Encebollado",
     rhythm: "Sanjuanito",
     celebration: "Inti Raymi",
-    value: "La diversidad puede estar en una misma bandera: costa, sierra, Amazonia y Galapagos.",
-    clue: "Pais atravesado por la linea ecuatorial, con sanjuanito, kichwa y encebollado.",
+    value: "La diversidad puede estar en una misma bandera: costa, sierra, Amazonía y Galápagos.",
+    clue: "País atravesado por la línea ecuatorial, con sanjuanito, kichwa y encebollado.",
+    guessClues: [
+      "Su nombre está ligado a una línea imaginaria del planeta.",
+      "Incluye costa, sierra, Amazonía y un archipiélago famoso por su biodiversidad.",
+      "El kichwa forma parte de su diversidad lingüística.",
+      "El sanjuanito expresa una tradición musical andina.",
+      "El encebollado es un plato muy popular en su costa."
+    ],
     music: { tempo: 108, scale: [262, 330, 392, 440, 523], drum: "sanjuanito" }
   },
   {
@@ -117,30 +166,44 @@ const COUNTRIES = [
     capital: "Buenos Aires",
     flag: "🇦🇷",
     flagImage: "assets/flags/argentina.svg",
-    region: "Suramerica",
-    language: "Espanol rioplatense",
-    greeting: "Che, como andas?",
+    region: "Suramérica",
+    language: "Español rioplatense",
+    greeting: "Che, ¿cómo andás?",
     food: "Empanadas",
     rhythm: "Tango / chacarera",
-    celebration: "Dia de la Tradicion",
-    value: "La identidad tambien se canta, se debate y se comparte en la mesa.",
-    clue: "Pais del Cono Sur asociado con tango, mate, empanadas y una hinchada muy expresiva.",
+    celebration: "Día de la Tradición",
+    value: "La identidad también se canta, se debate y se comparte en la mesa.",
+    clue: "País del Cono Sur asociado con tango, mate, empanadas y una hinchada muy expresiva.",
+    guessClues: [
+      "Está en el Cono Sur y usa una forma rioplatense del español.",
+      "El mate y la conversación hacen parte de muchas escenas cotidianas.",
+      "El tango nació en un contexto urbano y portuario muy diverso.",
+      "La chacarera expresa una tradición musical del interior.",
+      "Las empanadas cambian mucho según la región."
+    ],
     music: { tempo: 96, scale: [330, 392, 440, 523, 587], drum: "tango" }
   },
   {
     id: "paraguay",
     name: "Paraguay",
-    capital: "Asuncion",
+    capital: "Asunción",
     flag: "🇵🇾",
     flagImage: "assets/flags/paraguay.svg",
-    region: "Suramerica",
-    language: "Espanol y guarani",
-    greeting: "Mba'eichapa",
+    region: "Suramérica",
+    language: "Español y guaraní",
+    greeting: "Mba'éichapa",
     food: "Sopa paraguaya",
     rhythm: "Polca paraguaya",
     celebration: "Fiesta de San Juan",
     value: "El bilingüismo cotidiano puede ser una fuerza de identidad compartida.",
-    clue: "Pais bilingue donde el guarani esta muy presente en la vida diaria.",
+    clue: "País bilingüe donde el guaraní está muy presente en la vida diaria.",
+    guessClues: [
+      "El guaraní tiene presencia cotidiana junto al español.",
+      "Su capital se ubica cerca del río Paraguay.",
+      "Su arpa tiene un papel muy reconocido en la música tradicional.",
+      "Una comida llamada sopa no es líquida, sino sólida.",
+      "La polca paraguaya hace parte de su identidad sonora."
+    ],
     music: { tempo: 116, scale: [330, 392, 494, 587, 659], drum: "polca" }
   },
   {
@@ -149,107 +212,74 @@ const COUNTRIES = [
     capital: "Montevideo",
     flag: "🇺🇾",
     flagImage: "assets/flags/uruguay.svg",
-    region: "Suramerica",
-    language: "Espanol rioplatense",
-    greeting: "Bo, como andas?",
+    region: "Suramérica",
+    language: "Español rioplatense",
+    greeting: "Bo, ¿cómo andás?",
     food: "Chivito",
     rhythm: "Candombe",
     celebration: "Llamadas",
-    value: "La memoria afrodescendiente tambien construye identidad nacional.",
-    clue: "Pais rioplatense de candombe, chivito, mate y carnaval de llamadas.",
+    value: "La memoria afrodescendiente también construye identidad nacional.",
+    clue: "País rioplatense de candombe, chivito, mate y carnaval de llamadas.",
+    guessClues: [
+      "Es un país pequeño del Río de la Plata.",
+      "Comparte con vecinos el mate y formas rioplatenses de hablar.",
+      "El candombe conserva una memoria afrodescendiente fundamental.",
+      "Las Llamadas son parte importante de su carnaval.",
+      "El chivito es una comida muy asociada con su vida urbana."
+    ],
     music: { tempo: 114, scale: [294, 349, 392, 466, 587], drum: "candombe" }
   }
 ];
 
 const SCENARIOS = [
-  {
-    prompt: "Una persona nueva no entiende una broma local y queda incomoda. Cual accion demuestra mejor competencia intercultural?",
-    options: [
-      "Explicar el contexto sin burlarse, reconocer que el codigo no era compartido e invitarla a preguntar o compartir un codigo propio.",
-      "Traducirle la broma rapidamente y seguir, para no ponerla en el centro de la atencion.",
-      "Evitar hacer bromas durante toda la actividad, porque cualquier codigo local puede excluir."
-    ],
-    correct: 0
-  },
-  {
-    prompt: "Alguien dice: 'ese acento suena chistoso, repitelo'. Que respuesta evita exotizar a la persona?",
-    options: [
-      "Pedirle que repita solo si tambien quiere ensenar palabras de su region.",
-      "Nombrar que pedir repetir para divertir al grupo puede convertir su forma de hablar en burla, y cambiar la pregunta hacia significados o historias.",
-      "Decir que todos tenemos acento y continuar sin hablar mas del tema."
-    ],
-    correct: 1
-  },
-  {
-    prompt: "Un plato tradicional genera rechazo por su olor o aspecto. Que opcion respeta sin imponer gustos?",
-    options: [
-      "Probarlo aunque no se quiera, porque rechazarlo seria irrespetuoso.",
-      "Decir con cuidado que no se desea probar y preguntar por su historia, preparacion y momentos en que se comparte.",
-      "Retirarlo de la mesa para evitar comentarios incomodos."
-    ],
-    correct: 1
-  },
-  {
-    prompt: "Dos integrantes discrepan sobre una practica religiosa o familiar. Que regla evita tanto el juicio moral como el 'todo vale'?",
-    options: [
-      "Cada quien explica el sentido de la practica, el grupo pregunta por contexto antes de opinar y nadie queda obligado a adoptarla.",
-      "Todas las practicas deben aceptarse sin preguntas para demostrar tolerancia.",
-      "El grupo vota cual postura parece mas moderna y esa queda como conclusion."
-    ],
-    correct: 0
-  },
-  {
-    prompt: "Un integrante entiende el reto pero no quiere hablar en publico por inseguridad linguistica. Que solucion cuida participacion y autonomia?",
-    options: [
-      "Asignarle automaticamente el rol de dibujar para que no tenga que hablar.",
-      "Preguntarle que rol prefiere asumir: escribir, decidir, dibujar, ensayar con alguien o hacer voceria compartida.",
-      "Pedirle una frase corta obligatoria, porque todos deben participar igual."
-    ],
-    correct: 1
-  },
-  {
-    prompt: "El equipo solo conoce un pais por noticias negativas o memes. Que pregunta reduce estereotipos sin negar problemas reales?",
-    options: [
-      "Que practica, palabra, fiesta o historia concreta podemos conocer, y que fuentes nos ayudan a no reducir el pais a un solo relato?",
-      "Cual es el problema principal de ese pais y como afecta su cultura?",
-      "Que cosas positivas tiene ese pais para equilibrar lo malo que se escucha?"
-    ],
-    correct: 0
-  },
-  {
-    prompt: "Dos personas toman todas las decisiones porque quieren ganar rapido y dejan por fuera a quien sabe del tema. Que es fair play intercultural?",
-    options: [
-      "Mantener el ritmo y pedirle a esa persona que confirme al final para no perder tiempo.",
-      "Pausar brevemente, redistribuir roles y hacer que la decision incluya a quien tenia conocimiento o experiencia relacionada.",
-      "Anotar que hubo poca participacion y compensarlo en la siguiente actividad."
-    ],
-    correct: 1
-  },
-  {
-    prompt: "Una celebracion ajena debe representarse en 10 segundos. Como evitar caricaturizarla?",
-    options: [
-      "Imitar lo mas visible para que el resto adivine rapido, si no hay mala intencion.",
-      "Representar un valor o contexto de la celebracion, no rasgos exagerados de las personas que la practican.",
-      "No representarla, porque cualquier representacion cultural puede ser irrespetuosa."
-    ],
-    correct: 1
-  },
-  {
-    prompt: "Un grupo usa la bandera de un pais como chiste o castigo en el juego. Que intervencion es mas adecuada?",
-    options: [
-      "Recordar que los simbolos nacionales pueden tener valor afectivo y mover la dinamica hacia aprendizaje, no ridiculizacion.",
-      "Permitirlo si ninguna persona de ese pais esta presente.",
-      "Cambiar todas las banderas por nombres para evitar conflictos."
-    ],
-    correct: 0
-  },
-  {
-    prompt: "Alguien afirma: 'interculturalidad es que todos se adapten a la cultura mayoritaria'. Cual respuesta corrige mejor?",
-    options: [
-      "Si, porque una cultura comun evita malentendidos.",
-      "No: interculturalidad implica dialogo y ajustes mutuos, reconociendo diferencias de poder entre culturas.",
-      "Depende: las minorias pueden conservar costumbres solo en espacios privados."
-    ],
-    correct: 1
-  }
+  { prompt: "Una persona no entiende una broma local. ¿Qué acción cuida mejor la convivencia?", options: ["Explicar sin burlas", "Repetir más fuerte", "Cambiar de grupo"], correct: 0 },
+  { prompt: "Alguien se ríe de un acento. ¿Qué respuesta evita la burla?", options: ["Nombrar el respeto", "Imitar el acento", "Ignorar siempre"], correct: 0 },
+  { prompt: "Un plato desconocido causa rechazo. ¿Qué actitud es más intercultural?", options: ["Preguntar su historia", "Hacer gestos", "Alejar la comida"], correct: 0 },
+  { prompt: "Dos costumbres familiares chocan. ¿Qué ayuda al diálogo?", options: ["Preguntar el sentido", "Votar la mejor", "Callar diferencias"], correct: 0 },
+  { prompt: "Un integrante no quiere hablar en público. ¿Qué conviene hacer?", options: ["Ofrecer roles", "Obligar a hablar", "Excluirlo"], correct: 0 },
+  { prompt: "Un país solo se menciona por memes. ¿Qué reduce estereotipos?", options: ["Buscar más fuentes", "Repetir el meme", "Cambiar de país"], correct: 0 },
+  { prompt: "Dos personas deciden todo por rapidez. ¿Qué es juego limpio?", options: ["Repartir roles", "Seguir corriendo", "Decidir al azar"], correct: 0 },
+  { prompt: "Hay que representar una fiesta ajena. ¿Qué evita caricaturas?", options: ["Mostrar su sentido", "Exagerar gestos", "Usar disfraces"], correct: 0 },
+  { prompt: "Una bandera se usa como chiste. ¿Qué intervención es adecuada?", options: ["Cuidar el símbolo", "Reírse igual", "Ocultarla"], correct: 0 },
+  { prompt: "Alguien dice que todos deben adaptarse a la mayoría. ¿Qué responde mejor?", options: ["Ajustes mutuos", "Obediencia total", "Silencio cómodo"], correct: 0 },
+  { prompt: "Un compañero pronuncia mal una palabra en otra lengua. ¿Qué ayuda?", options: ["Corregir con cuidado", "Burlarse suave", "No dejarlo hablar"], correct: 0 },
+  { prompt: "Una persona cuenta una tradición y nadie escucha. ¿Qué hacer?", options: ["Dar la palabra", "Cambiar de tema", "Hablar encima"], correct: 0 },
+  { prompt: "Un equipo asume que una cultura es 'atrasada'. ¿Qué opción corrige?", options: ["Cuestionar prejuicios", "Aceptar la frase", "Evitar el tema"], correct: 0 },
+  { prompt: "Hay desacuerdo por una palabra regional. ¿Qué favorece el aprendizaje?", options: ["Comparar significados", "Elegir una sola", "Prohibir palabras"], correct: 0 },
+  { prompt: "Una persona recién llegada no conoce las reglas del juego. ¿Qué hacer?", options: ["Explicar con calma", "Apurarla", "Cambiarla de equipo"], correct: 0 },
+  { prompt: "Un grupo copia una danza sin contexto. ¿Qué sería más respetuoso?", options: ["Investigar su origen", "Inventar pasos", "Reírse del ritmo"], correct: 0 },
+  { prompt: "Alguien dice 'eso aquí no se hace'. ¿Qué abre diálogo?", options: ["Preguntar por qué", "Cerrar la charla", "Imponer la norma"], correct: 0 },
+  { prompt: "Un estudiante mezcla idiomas al hablar. ¿Qué mirada es más justa?", options: ["Valorar su repertorio", "Corregir todo", "Pedir solo español"], correct: 0 },
+  { prompt: "Una celebración religiosa aparece en el juego. ¿Qué conviene?", options: ["Tratarla con respeto", "Usarla de burla", "Reducirla a disfraz"], correct: 0 },
+  { prompt: "Un equipo gana, pero humilla al otro. ¿Qué falta?", options: ["Juego limpio", "Más velocidad", "Más volumen"], correct: 0 },
+  { prompt: "Una persona no quiere probar una comida. ¿Qué respuesta respeta?", options: ["Aceptar su límite", "Presionarla", "Ridiculizarla"], correct: 0 },
+  { prompt: "Se confunde nacionalidad con apariencia física. ¿Qué conviene recordar?", options: ["No asumir identidades", "Adivinar rápido", "Señalar rasgos"], correct: 0 },
+  { prompt: "Un dato cultural genera sorpresa. ¿Qué pregunta es mejor?", options: ["¿Qué significa?", "¿Es raro allá?", "¿Quién inventó eso?"], correct: 0 },
+  { prompt: "Un grupo habla solo con quienes ya conoce. ¿Qué mejora la integración?", options: ["Rotar parejas", "Cerrar el círculo", "Competir aparte"], correct: 0 },
+  { prompt: "Un compañero trae una historia dolorosa de su país. ¿Qué actitud cuida?", options: ["Escuchar sin morbo", "Pedir detalles", "Cambiar rápido"], correct: 0 },
+  { prompt: "Una tradición se presenta como si todos la vivieran igual. ¿Qué precisión falta?", options: ["Reconocer diversidad", "Generalizar más", "Elegir un ejemplo"], correct: 0 },
+  { prompt: "Alguien usa una palabra ofensiva sin saberlo. ¿Qué ayuda?", options: ["Explicar el daño", "Atacarlo", "Repetirla"], correct: 0 },
+  { prompt: "El equipo no entiende una práctica cultural. ¿Qué paso es responsable?", options: ["Pedir contexto", "Juzgar rápido", "Descartarla"], correct: 0 },
+  { prompt: "Una persona queda siempre como traductora. ¿Qué problema hay?", options: ["Carga desigual", "Demasiada ayuda", "Poco silencio"], correct: 0 },
+  { prompt: "Un símbolo indígena se usa como decoración sin permiso. ¿Qué revisar?", options: ["Respeto y contexto", "Colores bonitos", "Tamaño del dibujo"], correct: 0 },
+  { prompt: "Un estudiante cambia de opinión tras escuchar a otro. ¿Qué valor muestra?", options: ["Apertura", "Debilidad", "Confusión"], correct: 0 },
+  { prompt: "Una regla del juego deja por fuera a alguien. ¿Qué hacer?", options: ["Ajustar la regla", "Culparlo", "Seguir igual"], correct: 0 },
+  { prompt: "Alguien presume saber todo de un país por una serie. ¿Qué falta?", options: ["Contrastar fuentes", "Ver más series", "Hablar más duro"], correct: 0 },
+  { prompt: "Un equipo confunde dos países vecinos. ¿Qué actitud conviene?", options: ["Corregir con datos", "Burlarse", "Dejar el error"], correct: 0 },
+  { prompt: "Una persona pide que no toquen su cabello o ropa. ¿Qué corresponde?", options: ["Respetar el límite", "Insistir amable", "Tomar foto"], correct: 0 },
+  { prompt: "El grupo convierte una lengua en trabalenguas. ¿Qué corregir?", options: ["Tratarla como lengua", "Reír más", "Hablar más rápido"], correct: 0 },
+  { prompt: "Alguien dice que una comida 'huele mal'. ¿Qué alternativa cuida?", options: ["Hablar con respeto", "Taparse la nariz", "Sacar el plato"], correct: 0 },
+  { prompt: "Un compañero explica una tradición y lo interrumpen. ¿Qué práctica ayuda?", options: ["Turnos de palabra", "Más competencia", "Menos preguntas"], correct: 0 },
+  { prompt: "Una opinión cultural incomoda al grupo. ¿Qué hacer primero?", options: ["Pedir razones", "Reírse", "Cancelar todo"], correct: 0 },
+  { prompt: "Una persona se equivoca al ubicar un país. ¿Qué respuesta enseña?", options: ["Mostrar el mapa", "Hacer burla", "Quitar puntos extra"], correct: 0 },
+  { prompt: "El equipo usa 'normal' para su propia cultura. ¿Qué conviene?", options: ["Nombrar perspectivas", "Mantenerlo", "Comparar rangos"], correct: 0 },
+  { prompt: "Un participante habla poco por timidez. ¿Qué participación sirve?", options: ["Vocería compartida", "Exposición obligada", "Silencio total"], correct: 0 },
+  { prompt: "Una historia migrante se vuelve chisme. ¿Qué límite es clave?", options: ["Cuidar privacidad", "Preguntar detalles", "Difundirla"], correct: 0 },
+  { prompt: "Un equipo quiere ganar ignorando acuerdos. ¿Qué valor se pierde?", options: ["Cooperación", "Rapidez", "Estrategia"], correct: 0 },
+  { prompt: "Una persona corrige un estereotipo. ¿Qué debe hacer el grupo?", options: ["Escuchar y ajustar", "Defender el chiste", "Cambiar de mesa"], correct: 0 },
+  { prompt: "Un país se reduce a fútbol. ¿Qué amplía la mirada?", options: ["Cultura cotidiana", "Solo resultados", "Uniformes"], correct: 0 },
+  { prompt: "Una palabra regional causa risa. ¿Qué gesto cuida?", options: ["Preguntar significado", "Repetir burlas", "Imitar voz"], correct: 0 },
+  { prompt: "Alguien no participa por no entender una instrucción. ¿Qué hacer?", options: ["Reexplicar", "Avanzar sin él", "Bajarle puntos"], correct: 0 },
+  { prompt: "Una diferencia cultural se vuelve conflicto. ¿Qué paso inicial ayuda?", options: ["Escucha activa", "Ganarle al otro", "Evitar diálogo"], correct: 0 },
+  { prompt: "Un equipo celebra el error de otro. ¿Qué sería mejor?", options: ["Animar y aprender", "Gritar más", "Restar respeto"], correct: 0 }
 ];

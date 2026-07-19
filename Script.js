@@ -6,13 +6,14 @@ const STATIONS = [
   { id: 1, label: "2 Memoria" },
   { id: 2, label: "3 Adivina" },
   { id: 3, label: "4 Convivencia" },
-  { id: 4, label: "5 Musica" },
+  { id: 4, label: "5 Música" },
   { id: 5, label: "6 Cierre" }
 ];
 
 const state = {
   activeTeamKey: "",
   tournament: { teams: [] },
+  draw: { active: false, awaitingScore: false, done: false },
   memory: { lock: false, first: null, matches: 0, active: false, done: false },
   guess: { country: null, active: false, done: false, revealed: 0, wrongAttempts: 0 },
   scenario: { active: false, done: false, opened: new Set(), answered: new Set(), correct: new Set() },
@@ -23,6 +24,7 @@ const state = {
 
 let audioEngine = null;
 let countryAudioToken = 0;
+const soundAudioCache = new Map();
 let resumeGeneralMusicOnReturn = false;
 
 function $(selector){ return document.querySelector(selector); }
@@ -291,7 +293,7 @@ function refreshHeader(){
   $("#stampValue").textContent = `${team ? team.stamps.length : 0}/6`;
   $("#finalScore").textContent = team ? team.score : 0;
   $("#finalTeamName").textContent = team ? team.name : "Equipo sin nombre";
-  showTeamMessage(team ? `Equipo guardado: ${team.name}. Maximo total: 100 puntos.` : "Cada nombre queda guardado en este PC y no se puede repetir.");
+  showTeamMessage(team ? `Equipo guardado: ${team.name}. Máximo total: 100 puntos.` : "Cada nombre queda guardado en este PC y no se puede repetir.");
   updateCountryResult();
   refreshStampButtons();
   refreshNavState();
@@ -303,7 +305,7 @@ function refreshStampButtons(){
   $all(".stamp-btn").forEach(btn => {
     const id = Number(btn.dataset.station);
     const done = Boolean(team && team.stamps.includes(id));
-    btn.textContent = done ? (id === 5 ? "Cierre sellado automaticamente" : "Estacion sellada automaticamente") : "Sello automatico";
+    btn.textContent = done ? (id === 5 ? "Cierre sellado automáticamente" : "Estación sellada automáticamente") : "Sello automático";
   });
 }
 
@@ -311,15 +313,19 @@ function startDrawTimer(){
   if(!ensureTeam() || isLocked("draw")) return;
   const team = activeTeam();
   if(!team.countryId){
-    $("#drawStatus").textContent = "Primero deben sortear el pais. Esta es la unica estacion con ese orden.";
+    $("#drawStatus").textContent = "Primero deben sortear el país. Esta es la única estación con ese orden.";
     return;
   }
-  $("#drawStatus").textContent = "Cronometro activo: celebren la bandera, organicen grito de equipo y esperen el sello.";
+  state.draw = { active: true, awaitingScore: false, done: false };
+  toggleDrawScoring(false);
+  $("#startDrawBtn").disabled = true;
+  $("#drawCountryBtn").disabled = true;
+  $("#drawStatus").textContent = "Cronómetro activo: dibujen la bandera y escriban el nombre del país en 20 segundos.";
   startTimer("draw", 20, $("#drawTimer"), () => {
-    setActivityScore("draw", ACTIVITY_MAX.draw);
-    lockActivity("draw");
-    autoSealStation("draw");
-    $("#drawStatus").textContent = "Tiempo terminado. Estacion sellada automaticamente.";
+    state.draw.active = false;
+    state.draw.awaitingScore = true;
+    toggleDrawScoring(true);
+    $("#drawStatus").textContent = "Tiempo terminado. Evalúen el dibujo y el nombre del país para sellar la estación.";
   });
 }
 
@@ -327,7 +333,7 @@ function drawCountry(){
   const team = activeTeam();
   if(!ensureTeam()) return;
   if(isLocked("draw")){
-    $("#drawStatus").textContent = "Esta actividad ya esta cerrada.";
+    $("#drawStatus").textContent = "Esta actividad ya está cerrada.";
     return;
   }
   if(team.countryId){
@@ -337,14 +343,32 @@ function drawCountry(){
   const used = assignedCountryIds(team.key);
   const available = usageBalancedCountries("draw", used, 15);
   if(!available.length){
-    showTeamMessage("Ya no quedan paises disponibles. Finalicen o reinicien el juego.", true);
+    showTeamMessage("Ya no quedan países disponibles. Finalicen o reinicien el juego.", true);
     return;
   }
   team.countryId = available[0].id;
-  $("#drawStatus").textContent = "Pais asignado. Ahora activen el cronometro para completar y sellar.";
+  $("#drawStatus").textContent = "País asignado. Ahora activen el cronómetro para dibujar y escribir el nombre.";
   updateCountryResult();
   updateMusicForStation(currentStationId());
   saveTournament();
+}
+
+function toggleDrawScoring(enabled){
+  const panel = $("#drawScoring");
+  if(panel) panel.hidden = !enabled;
+  $all(".draw-score-btn").forEach(btn => btn.disabled = !enabled);
+}
+
+function scoreDraw(value){
+  if(!ensureTeam() || isLocked("draw") || !state.draw.awaitingScore) return;
+  const score = Number(value);
+  state.draw.awaitingScore = false;
+  state.draw.done = true;
+  toggleDrawScoring(false);
+  setActivityScore("draw", score);
+  lockActivity("draw");
+  autoSealStation("draw");
+  $("#drawStatus").textContent = `Estación sellada: ${score}/${ACTIVITY_MAX.draw} puntos por bandera y nombre del país.`;
 }
 
 function updateCountryResult(){
@@ -363,12 +387,15 @@ function clearTransientUi(){
     const timer = $(`#${key}Timer`);
     if(timer) timer.textContent = "00";
   });
-  $("#drawStatus").textContent = "Primero sorteen el pais; despues activen el cronometro para sellar automaticamente.";
-  $("#memoryStatus").textContent = "Pulsa iniciar ronda. Sin cronometro las fichas de pais-capital estan bloqueadas.";
-  $("#guessStatus").textContent = "Pulsa nueva ronda para iniciar el cronometro.";
-  $("#scenarioStatus").textContent = "Elijan una tarjeta y respondan rapido.";
-  $("#soundStatus").textContent = "Primero activen cronometro. Las canciones se habilitan una por una.";
-  $("#commitmentStatus").textContent = "Minimo 5 frases para puntuar el cierre.";
+  $("#drawStatus").textContent = "Primero sorteen el país; después activen el cronómetro.";
+  toggleDrawScoring(false);
+  $("#startDrawBtn").disabled = false;
+  $("#drawCountryBtn").disabled = false;
+  $("#memoryStatus").textContent = "Pulsa iniciar ronda. Sin cronómetro las fichas están bloqueadas.";
+  $("#guessStatus").textContent = "Pulsa nueva ronda para iniciar el cronómetro.";
+  $("#scenarioStatus").textContent = "Elijan una tarjeta y respondan rápido.";
+  $("#soundStatus").textContent = "Primero activen cronómetro. Las canciones se habilitan una por una.";
+  $("#commitmentStatus").textContent = "Mínimo 5 frases para puntuar el cierre.";
   $("#guessInput").value = "";
   $("#guessInput").disabled = false;
   $("#checkGuessBtn").disabled = false;
@@ -394,19 +421,21 @@ function stampStation(id){
     commitment: "#commitmentStatus"
   };
   const target = statusMap[activity];
-  if(target) $(target).textContent = "El sello es automatico: termina el tiempo o completa la actividad.";
+  if(target) $(target).textContent = "El sello es automático: termina el tiempo o completa la actividad.";
 }
 
 function buildMemory(){
   const board = $("#memoryBoard");
   board.innerHTML = "";
-  const countries = shuffled(COUNTRIES, 21).slice(0, 10);
+  const countries = shuffledWithEntropy(COUNTRIES, 21).slice(0, 10);
+  const mode = shuffledWithEntropy(["capital", "food"], 24)[0];
+  const modeLabel = mode === "capital" ? "país-capital" : "país-comida típica";
   const cards = [];
   countries.forEach(country => {
     cards.push({ id: country.id, text: `${country.flag} ${country.name}` });
-    cards.push({ id: country.id, text: country.capital });
+    cards.push({ id: country.id, text: mode === "capital" ? country.capital : country.food });
   });
-  shuffled(cards, 22).forEach((card, index) => {
+  shuffledWithEntropy(cards, 22).forEach((card, index) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "memory-card is-disabled";
@@ -416,8 +445,8 @@ function buildMemory(){
     btn.addEventListener("click", () => flipMemory(btn));
     board.appendChild(btn);
   });
-  state.memory = { lock: false, first: null, matches: 0, active: false, done: false };
-  $("#memoryStatus").textContent = "Pulsa iniciar ronda. Sin cronometro las fichas de pais-capital estan bloqueadas.";
+  state.memory = { lock: false, first: null, matches: 0, active: false, done: false, mode };
+  $("#memoryStatus").textContent = `Pulsa iniciar ronda. Esta vez jugarán memoria de ${modeLabel}.`;
 }
 
 function flipMemory(card){
@@ -451,7 +480,8 @@ function startMemory(){
   state.memory.active = true;
   state.memory.startedAt = Date.now();
   $all(".memory-card").forEach(card => card.classList.remove("is-disabled"));
-  $("#memoryStatus").textContent = "Ronda activa: formen parejas pais-capital y griten la capital al encontrarla.";
+  const label = state.memory.mode === "capital" ? "país-capital" : "país-comida típica";
+  $("#memoryStatus").textContent = `Ronda activa: formen parejas de ${label} y celebren cada acierto.`;
   startTimer("memory", 120, $("#memoryTimer"), () => finishMemory(false));
 }
 
@@ -468,8 +498,8 @@ function finishMemory(completed){
   setActivityScore("memory", score);
   autoSealStation("memory");
   $("#memoryStatus").textContent = completed
-    ? `Ronda completa: ${score}/20. ${elapsedMs <= 60000 ? "Lo lograron en el primer minuto." : "Lo lograron despues del primer minuto."} Estacion sellada automaticamente.`
-    : `Tiempo terminado: ${score}/20. Estacion sellada automaticamente.`;
+    ? `Ronda completa: ${score}/20. ${elapsedMs <= 60000 ? "Lo lograron en el primer minuto." : "Lo lograron después del primer minuto."} Estación sellada automáticamente.`
+    : `Tiempo terminado: ${score}/20. Estación sellada automáticamente.`;
 }
 
 function buildGuessRound(){
@@ -490,21 +520,18 @@ function buildGuessRound(){
   saveTournament();
   $("#guessInput").value = "";
   $("#guessFeedback").textContent = "";
-  $("#guessStatus").textContent = "Ronda activa: cada pista desde la tercera baja el puntaje. Cada intento incorrecto tambien descuenta.";
+  $("#guessStatus").textContent = "Ronda activa: abran las pistas en orden. La bandera solo aparece al final.";
   const clues = [
-    `Bandera: ${state.guess.country.flag}`,
-    `Region: ${state.guess.country.region}`,
-    `Saludo: ${state.guess.country.greeting}`,
-    `Comida: ${state.guess.country.food}`,
-    `Musica: ${state.guess.country.rhythm}`,
-    `Lenguas: ${state.guess.country.language}`
+    ...(state.guess.country.guessClues || [state.guess.country.clue]),
+    `Bandera: ${state.guess.country.flag}`
   ];
   const clueGrid = $("#guessClues");
   clueGrid.innerHTML = "";
-  shuffled(clues, 43).forEach((clue, index) => {
+  clues.forEach((clue, index) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "clue-card";
+    btn.disabled = index !== 0;
     btn.innerHTML = `<span>Pista ${index + 1}</span><strong>?</strong>`;
     btn.addEventListener("click", () => revealGuessClue(btn, clue, index));
     clueGrid.appendChild(btn);
@@ -515,11 +542,13 @@ function buildGuessRound(){
 }
 
 function revealGuessClue(btn, clue, index){
-  if(!state.guess.active || state.guess.done || btn.classList.contains("revealed")) return;
+  if(!state.guess.active || state.guess.done || btn.classList.contains("revealed") || index !== state.guess.revealed) return;
   state.guess.revealed += 1;
   btn.classList.add("revealed");
   btn.innerHTML = `<span>Pista ${index + 1}</span><strong>${clue}</strong>`;
   $("#guessStatus").textContent = `Pistas abiertas: ${state.guess.revealed}. Intentos fallidos: ${state.guess.wrongAttempts || 0}. Puntaje posible: ${guessPotentialScore()}/20`;
+  const next = $all(".clue-card")[state.guess.revealed];
+  if(next) next.disabled = false;
 }
 
 function guessPotentialScore(){
@@ -559,14 +588,14 @@ function finishGuess(success){
   setActivityScore("guess", score);
   autoSealStation("guess");
   $("#guessFeedback").textContent = success
-    ? `Correcto: ${state.guess.country.flag} ${state.guess.country.name}. Puntaje: ${score}/20. Estacion sellada.`
-    : `Tiempo. Era ${state.guess.country.flag} ${state.guess.country.name}. Puntaje: 0/20. Estacion sellada.`;
+    ? `Correcto: ${state.guess.country.flag} ${state.guess.country.name}. Puntaje: ${score}/20. Estación sellada.`
+    : `Tiempo. Era ${state.guess.country.flag} ${state.guess.country.name}. Puntaje: 0/20. Estación sellada.`;
 }
 
 function buildGuessRoundPreview(){
   $("#guessClues").innerHTML = "";
   $("#guessFeedback").textContent = "";
-  $("#guessStatus").textContent = "Pulsa nueva ronda para iniciar el cronometro.";
+  $("#guessStatus").textContent = "Pulsa nueva ronda para iniciar el cronómetro.";
   $("#guessTimer").textContent = "00";
   $("#guessInput").disabled = false;
   $("#checkGuessBtn").disabled = false;
@@ -576,7 +605,7 @@ function buildScenarios(){
   const deck = $("#scenarioDeck");
   deck.innerHTML = "";
   state.scenario = { active: false, done: false, opened: new Set(), answered: new Set(), correct: new Set() };
-  shuffled(SCENARIOS, 61).slice(0, 6).forEach((scenario, index) => {
+  shuffledWithEntropy(SCENARIOS, 61).slice(0, 6).forEach((scenario, index) => {
     const card = document.createElement("article");
     card.className = "scenario-card is-disabled";
     card.dataset.index = index;
@@ -587,10 +616,12 @@ function buildScenarios(){
       <div class="scenario-options"></div>
     `;
     const options = card.querySelector(".scenario-options");
-    scenario.options.forEach((option, optionIndex) => {
+    const mixedOptions = shuffledWithEntropy(scenario.options.map((option, optionIndex) => ({ option, optionIndex })), 70 + index);
+    mixedOptions.forEach(({ option, optionIndex }) => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "scenario-option";
+      btn.dataset.correct = String(optionIndex === scenario.correct);
       btn.textContent = option;
       btn.addEventListener("click", event => {
         event.stopPropagation();
@@ -605,6 +636,7 @@ function buildScenarios(){
 
 function startScenarioTimer(){
   if(!ensureTeam() || isLocked("scenario")) return;
+  buildScenarios();
   state.scenario.active = true;
   $all(".scenario-card").forEach(card => card.classList.remove("is-disabled"));
   $("#scenarioStatus").textContent = "Ronda activa: tienen 1 minuto y medio para abrir fichas y elegir respuestas correctas.";
@@ -615,7 +647,7 @@ function openScenarioCard(card){
   if(!state.scenario.active || state.scenario.done || card.classList.contains("open")) return;
   card.classList.add("open");
   state.scenario.opened.add(card.dataset.index);
-  $("#scenarioStatus").textContent = `Fichas abiertas: ${state.scenario.opened.size}/6. Ahora seleccionen la opcion correcta.`;
+  $("#scenarioStatus").textContent = `Fichas abiertas: ${state.scenario.opened.size}/6. Ahora seleccionen la opción correcta.`;
 }
 
 function answerScenarioCard(card, btn, scenario, optionIndex){
@@ -628,7 +660,7 @@ function answerScenarioCard(card, btn, scenario, optionIndex){
     btn.classList.add("correct");
   } else {
     btn.classList.add("wrong");
-    card.querySelectorAll(".scenario-option")[scenario.correct].classList.add("correct");
+    [...card.querySelectorAll(".scenario-option")].find(optionBtn => optionBtn.dataset.correct === "true")?.classList.add("correct");
   }
   $("#scenarioStatus").textContent = `Fichas respondidas: ${state.scenario.answered.size}/6. Correctas: ${state.scenario.correct.size}.`;
   if(state.scenario.answered.size === 6) finishScenario();
@@ -649,10 +681,11 @@ function finishScenario(){
 function startSoundGame(){
   if(!ensureTeam() || isLocked("sound")) return;
   buildSoundChallenge(true);
+  preloadSoundTracks(state.sound.tracks || []);
   state.sound.active = true;
   state.sound.resumeGeneralAfter = false;
   activateSoundCard(0);
-  $("#soundStatus").textContent = "Ronda activa: reproduzcan la primera cancion. Solo hay una oportunidad por cancion.";
+  $("#soundStatus").textContent = "Ronda activa: reproduzcan la primera canción. Solo hay una oportunidad por canción.";
   startTimer("sound", 25, $("#soundTimer"), finishSoundGame);
 }
 
@@ -674,7 +707,7 @@ function buildSoundChallenge(persistTracks = false){
     card.dataset.index = index;
     card.innerHTML = `
       <span>♪</span>
-      <strong>Cancion ${index + 1}</strong>
+      <strong>Canción ${index + 1}</strong>
       <p>Reproduce el audio y elige una bandera.</p>
       <button class="action-btn action-btn--small play-track" type="button">Reproducir</button>
       <div class="sound-options"></div>
@@ -706,6 +739,16 @@ function selectSoundTracks(){
   return withoutDraw.slice(0, 3);
 }
 
+function preloadSoundTracks(countryIds){
+  countryIds.forEach(id => {
+    if(soundAudioCache.has(id)) return;
+    const audio = new Audio(`assets/music/${id}.mp3`);
+    audio.preload = "auto";
+    audio.load();
+    soundAudioCache.set(id, audio);
+  });
+}
+
 async function playMusicTrack(country, index, triggerBtn){
   if(!state.sound.active || state.sound.done || index !== state.sound.currentIndex) return;
   const audio = $("#countryAudio");
@@ -714,7 +757,7 @@ async function playMusicTrack(country, index, triggerBtn){
   pauseGeneralMusic();
   if(audioEngine && audioEngine.enabled) audioEngine.stop();
   if(!audio){
-    $("#countryAudioHint").textContent = `No encontre el reproductor de la cancion ${index + 1}. Uso musica generada sin revelar el pais.`;
+    $("#countryAudioHint").textContent = `No encontré el reproductor de la canción ${index + 1}. Uso música generada sin revelar el país.`;
     await startGeneratedAudio();
     ensureAudio().setCountry(country);
     return;
@@ -723,21 +766,22 @@ async function playMusicTrack(country, index, triggerBtn){
     audio.pause();
     audio.removeAttribute("src");
     audio.load();
-    audio.src = `assets/music/${country.id}.mp3`;
+    const cached = soundAudioCache.get(country.id);
+    audio.src = cached ? cached.src : `assets/music/${country.id}.mp3`;
     audio.preload = "auto";
     audio.volume = 1;
     audio.currentTime = 0;
     audio.load();
   }
   if(triggerBtn) triggerBtn.disabled = true;
-  $("#countryAudioHint").textContent = `Cancion ${index + 1}: cargando audio local...`;
+  $("#countryAudioHint").textContent = `Canción ${index + 1}: cargando audio local...`;
   try {
     await audio.play();
     if(token !== countryAudioToken) return;
-    $("#countryAudioHint").textContent = `Cancion ${index + 1}: reproduciendo audio local.`;
+    $("#countryAudioHint").textContent = `Canción ${index + 1}: reproduciendo audio local.`;
   } catch(error) {
     if(token !== countryAudioToken) return;
-    $("#countryAudioHint").textContent = `No encontre el MP3 de la cancion ${index + 1}. Uso musica generada sin revelar el pais.`;
+    $("#countryAudioHint").textContent = `No encontré el MP3 de la canción ${index + 1}. Uso música generada sin revelar el país.`;
     await startGeneratedAudio();
     ensureAudio().setCountry(country);
   } finally {
@@ -768,7 +812,7 @@ function answerSoundTrack(card, btn, targetCountry, option){
   } else {
     state.sound.currentIndex = nextIndex;
     activateSoundCard(nextIndex);
-    $("#soundStatus").textContent = `Cancion ${cardIndex + 1} respondida. Ahora se habilita la cancion ${nextIndex + 1}.`;
+    $("#soundStatus").textContent = `Canción ${cardIndex + 1} respondida. Ahora se habilita la canción ${nextIndex + 1}.`;
   }
 }
 
@@ -842,14 +886,14 @@ function renderCommitments(){
 function startCommitment(){
   if(!ensureTeam() || isLocked("commitment")) return;
   state.commitment = { active: true, done: false };
-  $("#commitmentStatus").textContent = "Ronda activa: minimo 5 frases, cada una al balon colectivo.";
+  $("#commitmentStatus").textContent = "Ronda activa: mínimo 5 frases, cada una al balón colectivo.";
   startTimer("commitment", 60, $("#commitmentTimer"), finishCommitment);
 }
 
 function addCommitment(){
   const team = activeTeam();
   if(!team || !state.commitment.active || state.commitment.done || isLocked("commitment")){
-    $("#commitmentStatus").textContent = "Primero activen el cronometro del cierre.";
+    $("#commitmentStatus").textContent = "Primero activen el cronómetro del cierre.";
     return;
   }
   const input = $("#commitmentInput");
@@ -858,7 +902,7 @@ function addCommitment(){
   team.commitments.unshift(text);
   input.value = "";
   renderCommitments();
-  $("#commitmentStatus").textContent = `Frases en el balon: ${team.commitments.length}/5 minimo.`;
+  $("#commitmentStatus").textContent = `Frases en el balón: ${team.commitments.length}/5 mínimo.`;
   if(team.commitments.length >= 5) finishCommitment();
   saveTournament();
 }
@@ -874,8 +918,8 @@ function finishCommitment(){
   setActivityScore("commitment", score);
   autoSealStation("commitment");
   $("#commitmentStatus").textContent = team.commitments.length >= 5
-    ? "Cierre completo: 20/20. Estacion sellada automaticamente."
-    : `Tiempo terminado: ${score}/20 por ${team.commitments.length} frases. Estacion sellada.`;
+    ? "Cierre completo: 20/20. Estación sellada automáticamente."
+    : `Tiempo terminado: ${score}/20 por ${team.commitments.length} frases. Estación sellada.`;
 }
 
 function updateFinalMessage(){
@@ -883,8 +927,8 @@ function updateFinalMessage(){
   const msg = $("#finalMessage");
   const score = team ? team.score : 0;
   if(score >= 85) msg.textContent = "Copa levantada: rapidez, respeto, movimiento y escucha activa.";
-  else if(score >= 55) msg.textContent = "Buen partido intercultural. Aun pueden mejorar participacion y cierre colectivo.";
-  else msg.textContent = "Completen actividades con cronometro para sumar hasta 100 puntos.";
+  else if(score >= 55) msg.textContent = "Buen partido intercultural. Aún pueden mejorar participación y cierre colectivo.";
+  else msg.textContent = "Completen actividades con cronómetro para sumar hasta 100 puntos.";
 }
 
 function startTimer(key, seconds, el, onDone){
@@ -1034,8 +1078,8 @@ function updateMusicForStation(id){
   if(id >= 1 && id <= 5 && team){
     if(id === 4){
       $("#musicCountryFlag").textContent = "♪";
-      $("#musicCountryName").textContent = "Adivina el pais por la musica";
-      $("#musicCountryText").textContent = "Opciones: Argentina, Brasil, Colombia, Ecuador, Haiti, Mexico, Panama, Paraguay, Peru y Uruguay.";
+      $("#musicCountryName").textContent = "Adivina el país por la música";
+      $("#musicCountryText").textContent = "Opciones: Argentina, Brasil, Colombia, Ecuador, Haití, México, Panamá, Paraguay, Perú y Uruguay.";
       if(audioEngine) audioEngine.setCountry(null);
     } else {
       const country = id === 2 && state.guess.country ? state.guess.country : selectedCountry();
@@ -1044,8 +1088,8 @@ function updateMusicForStation(id){
     }
   } else {
     $("#musicCountryFlag").textContent = "♪";
-    $("#musicCountryName").textContent = "Musica general";
-    $("#musicCountryText").textContent = "En la actividad musical puedes usar MP3 por pais o musica generada.";
+    $("#musicCountryName").textContent = "Música general";
+    $("#musicCountryText").textContent = "En la actividad musical puedes usar MP3 por país o música generada.";
     if(audioEngine) audioEngine.setCountry(null);
   }
 }
@@ -1054,7 +1098,7 @@ async function toggleSound(){
   if(isGeneralMusicPlaying()){
     pauseGeneralMusic();
     $("#soundToggle").setAttribute("aria-pressed", "false");
-    $("#soundLabel").textContent = "Activar musica";
+    $("#soundLabel").textContent = "Activar música";
   } else {
     await playGeneralMusic();
   }
@@ -1072,7 +1116,7 @@ async function playGeneralMusic(){
     audio.loop = true;
     await audio.play();
     $("#soundToggle").setAttribute("aria-pressed", "true");
-    $("#soundLabel").textContent = "Pausar musica";
+    $("#soundLabel").textContent = "Pausar música";
     return true;
   } catch(error){
     $("#soundLabel").textContent = "Audio bloqueado";
@@ -1144,7 +1188,7 @@ function renderLeaderboard(){
   list.innerHTML = "";
   const teams = [...state.tournament.teams].sort((a, b) => b.score - a.score || a.createdAt.localeCompare(b.createdAt));
   if(!teams.length){
-    list.innerHTML = `<div class="leaderboard-empty">Todavia no hay equipos guardados.</div>`;
+    list.innerHTML = `<div class="leaderboard-empty">Todavía no hay equipos guardados.</div>`;
     return;
   }
   teams.forEach((team, index) => {
@@ -1154,7 +1198,7 @@ function renderLeaderboard(){
     row.innerHTML = `
       <span class="leaderboard-card__rank">${index + 1}</span>
       <span class="leaderboard-card__flag">${country ? country.flag : "◌"}</span>
-      <div><h3>${team.name}</h3><p>${country ? country.name : "Pais sin sortear"}</p></div>
+      <div><h3>${team.name}</h3><p>${country ? country.name : "País sin sortear"}</p></div>
       <strong>${team.score}/100</strong>
     `;
     list.appendChild(row);
@@ -1183,13 +1227,14 @@ function resetGame(){
   refreshHeader();
   goToStation(0);
   $("#soundToggle").setAttribute("aria-pressed", "false");
-  $("#soundLabel").textContent = "Activar musica";
+  $("#soundLabel").textContent = "Activar música";
   if(restartGeneralMusic){
     playGeneralMusic();
   }
 }
 
 function resetRoundState(){
+  state.draw = { active: false, awaitingScore: false, done: false };
   state.memory = { lock: false, first: null, matches: 0, active: false, done: false };
   state.guess = { country: null, active: false, done: false, revealed: 0, wrongAttempts: 0 };
   state.scenario = { active: false, done: false, opened: new Set(), answered: new Set(), correct: new Set() };
@@ -1211,6 +1256,7 @@ function wireEvents(){
   $("#teamName").addEventListener("keydown", event => { if(event.key === "Enter") saveTeam(); });
   $("#startDrawBtn").addEventListener("click", startDrawTimer);
   $("#drawCountryBtn").addEventListener("click", drawCountry);
+  $all(".draw-score-btn").forEach(btn => btn.addEventListener("click", () => scoreDraw(btn.dataset.score)));
   $("#startMemoryBtn").addEventListener("click", startMemory);
   $("#startGuessBtn").addEventListener("click", buildGuessRound);
   $("#checkGuessBtn").addEventListener("click", checkGuess);
