@@ -12,7 +12,7 @@ const STATIONS = [
 
 const state = {
   activeTeamKey: "",
-  tournament: { teams: [] },
+  tournament: { teams: [], soundCountryQueue: [], soundCountryHistory: [] },
   draw: { active: false, awaitingScore: false, done: false },
   memory: { lock: false, first: null, matches: 0, active: false, done: false },
   guess: { country: null, active: false, done: false, revealed: 0, wrongAttempts: 0 },
@@ -117,7 +117,9 @@ function newLocks(){
 
 function loadTournament(){
   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  state.tournament = saved.tournament || { teams: [] };
+  state.tournament = saved.tournament || { teams: [], soundCountryQueue: [], soundCountryHistory: [] };
+  state.tournament.soundCountryQueue = Array.isArray(state.tournament.soundCountryQueue) ? state.tournament.soundCountryQueue : [];
+  state.tournament.soundCountryHistory = Array.isArray(state.tournament.soundCountryHistory) ? state.tournament.soundCountryHistory : [];
   state.activeTeamKey = saved.activeTeamKey || "";
   state.tournament.teams.forEach(team => {
     team.activityScores = { ...newScores(), ...(team.activityScores || {}) };
@@ -128,6 +130,11 @@ function loadTournament(){
     team.soundCountryIds = team.soundCountryIds || team.soundTrackIds || [];
     team.score = totalScore(team);
   });
+  if(!state.tournament.soundCountryHistory.length){
+    state.tournament.soundCountryHistory = state.tournament.teams
+      .flatMap(team => team.soundCountryIds || team.soundTrackIds || [])
+      .slice(-30);
+  }
 }
 
 function saveTournament(){
@@ -737,12 +744,12 @@ function buildSoundChallenge(persistTracks = false){
   const container = $("#soundChallenge");
   container.innerHTML = "";
   state.sound = { active: false, done: false, opened: new Set(), correct: new Set(), currentIndex: 0, resumeGeneralAfter: state.sound.resumeGeneralAfter || false, tracks: [] };
-  const tracks = selectSoundTracks();
+  const tracks = persistTracks ? selectSoundTracks() : previewSoundTracks();
   state.sound.tracks = tracks.map(country => country.id);
   const team = activeTeam();
   if(team && persistTracks){
-    team.soundTrackIds = [...state.sound.tracks];
-    team.soundCountryIds = [...state.sound.tracks];
+    team.soundTrackIds = [...new Set([...(team.soundTrackIds || []), ...state.sound.tracks])];
+    team.soundCountryIds = [...new Set([...(team.soundCountryIds || []), ...state.sound.tracks])];
     saveTournament();
   }
   tracks.forEach((country, index) => {
@@ -771,16 +778,35 @@ function buildSoundChallenge(persistTracks = false){
 }
 
 function selectSoundTracks(){
-  const team = activeTeam();
-  const teamUsed = new Set([
-    team && team.countryId,
-    ...((team && team.guessCountryIds) || []),
-    ...((team && (team.soundCountryIds || team.soundTrackIds)) || [])
-  ].filter(Boolean));
-  const fresh = usageBalancedCountries("sound", teamUsed, 81);
-  if(fresh.length >= 3) return fresh.slice(0, 3);
-  const withoutDraw = usageBalancedCountries("sound", new Set([team && team.countryId].filter(Boolean)), 82);
-  return withoutDraw.slice(0, 3);
+  const selected = [];
+  const selectedIds = new Set();
+  while(selected.length < 3){
+    if(!state.tournament.soundCountryQueue.length){
+      refillSoundCountryQueue(selectedIds);
+    }
+    const id = state.tournament.soundCountryQueue.shift();
+    const country = countryById(id);
+    if(!country || selectedIds.has(id)) continue;
+    selected.push(country);
+    selectedIds.add(id);
+    state.tournament.soundCountryHistory.push(id);
+  }
+  state.tournament.soundCountryHistory = state.tournament.soundCountryHistory.slice(-30);
+  saveTournament();
+  return selected;
+}
+
+function previewSoundTracks(){
+  return shuffledWithEntropy(COUNTRIES, 80).slice(0, 3);
+}
+
+function refillSoundCountryQueue(excludedIds = new Set()){
+  const recent = new Set((state.tournament.soundCountryHistory || []).slice(-3));
+  let pool = COUNTRIES.filter(country => !excludedIds.has(country.id) && !recent.has(country.id));
+  if(pool.length < 3){
+    pool = COUNTRIES.filter(country => !excludedIds.has(country.id));
+  }
+  state.tournament.soundCountryQueue = shuffledWithEntropy(pool, 83).map(country => country.id);
 }
 
 function preloadSoundTracks(countryIds){
@@ -1279,7 +1305,7 @@ function resetGame(){
   }
   localStorage.removeItem(STORAGE_KEY);
   state.activeTeamKey = "";
-  state.tournament = { teams: [] };
+  state.tournament = { teams: [], soundCountryQueue: [], soundCountryHistory: [] };
   resetRoundState();
   $("#leaderboardModal").hidden = true;
   closeFinishCelebration();
